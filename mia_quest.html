@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1b12">
+<title>Mias Mathe-Quest 🎮</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1b12;--s1:#132218;--s2:#1a2e23;--card:#1e3529;--brd:#2a4535;
+  --amber:#f59e0b;--amber2:#fde68a;--grn:#34d399;--grn2:#6ee7b7;
+  --red:#f87171;--blue:#60a5fa;--purple:#a78bfa;--pink:#f472b6;
+  --txt:#e2f0e8;--muted:#6b9b7a;
+  --fn:'Nunito',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html,body{height:100%;font-family:var(--fn);background:var(--bg);color:var(--txt);overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 15% 15%,rgba(52,211,153,.07),transparent 60%),
+             radial-gradient(ellipse 50% 40% at 85% 80%,rgba(245,158,11,.07),transparent 60%)}
+#root{position:relative;z-index:1;min-height:100vh}
+
+/* ── CANVAS / OVERLAYS ─────────────────────────────────────────────────── */
+#confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:9999}
+
+.xp-float{position:fixed;font-size:1rem;font-weight:900;color:var(--amber);
+  pointer-events:none;z-index:9998;font-family:var(--mono);
+  animation:floatUp .85s ease-out forwards}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-70px) scale(1.4)}}
+
+#lu-overlay{position:fixed;inset:0;z-index:9997;display:none;background:rgba(0,0,0,.75);
+  backdrop-filter:blur(8px);align-items:center;justify-content:center}
+#lu-overlay.show{display:flex;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.lu-box{background:linear-gradient(135deg,#1e3529,#132218);border:2px solid var(--amber);
+  border-radius:24px;padding:36px 28px;text-align:center;max-width:290px;
+  animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.lu-box .le{font-size:3.5rem;margin-bottom:10px}
+.lu-box h2{font-size:1.4rem;font-weight:900;color:var(--amber);margin-bottom:6px}
+.lu-box p{color:var(--muted);font-size:.88rem;margin-bottom:18px}
+.lu-box button{background:var(--amber);color:#0d1b12;border:none;border-radius:12px;
+  padding:13px 26px;font-size:.95rem;font-weight:900;font-family:var(--fn);cursor:pointer}
+
+#toast-wrap{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9996;
+  display:flex;flex-direction:column;gap:8px;width:calc(100% - 28px);max-width:360px}
+.toast{background:rgba(19,34,24,.97);border:1px solid var(--amber);border-radius:14px;
+  padding:11px 14px;display:flex;align-items:center;gap:11px;
+  animation:slideD .35s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+@keyframes slideD{from{transform:translateY(-50px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast .ti{font-size:1.7rem;flex-shrink:0}
+.toast .tb h4{font-size:.82rem;font-weight:800;color:var(--amber);margin-bottom:2px}
+.toast .tb p{font-size:.73rem;color:var(--muted)}
+
+/* ── TOP BAR ────────────────────────────────────────────────────────────── */
+.topbar{background:rgba(19,34,24,.97);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--brd);padding:10px 14px;
+  display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200}
+.topbar .logo{font-size:1.3rem}
+.topbar .tb-title{flex:1;min-width:0}
+.topbar .tb-title h1{font-size:.87rem;font-weight:900;color:var(--amber);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .tb-title p{font-size:.66rem;color:var(--muted)}
+.xp-block{text-align:right;flex-shrink:0}
+.xp-num{font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--grn)}
+.xp-bar-wrap{width:76px;height:5px;background:var(--brd);border-radius:3px;overflow:hidden;margin-top:3px}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--grn));
+  border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+/* ── HOME ───────────────────────────────────────────────────────────────── */
+#screen-home{padding:14px 14px 60px}
+.home-hero{text-align:center;padding:18px 0 14px}
+.avatar{font-size:2.8rem;display:inline-block;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.home-hero h2{font-size:1.3rem;font-weight:900;margin:8px 0 4px;
+  background:linear-gradient(135deg,var(--amber),var(--grn));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.home-hero p{font-size:.78rem;color:var(--muted);line-height:1.6;max-width:300px;margin:0 auto}
+
+.stats-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 0}
+.stat-pill{background:var(--card);border:1px solid var(--brd);border-radius:12px;
+  padding:9px 6px;text-align:center}
+.stat-pill .sv{font-family:var(--mono);font-size:1.05rem;font-weight:700}
+.stat-pill .sl{font-size:.63rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+.sv.xpc{color:var(--grn)}.sv.lvc{color:var(--amber)}.sv.ach{color:var(--purple)}
+
+.topic-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.topic-btn{background:var(--card);border:2px solid var(--brd);border-radius:16px;
+  padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;
+  position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:5px}
+.topic-btn:active{transform:scale(.95)}
+.topic-btn .ticon{font-size:1.7rem}
+.topic-btn .tname{font-size:.76rem;font-weight:800;line-height:1.3}
+.topic-btn .stars{font-size:.88rem;min-height:1.1rem}
+.topic-btn .tscore{font-size:.63rem;color:var(--muted);font-family:var(--mono)}
+.topic-btn.s3{border-color:rgba(245,158,11,.55);background:rgba(245,158,11,.07)}
+.topic-btn.s2{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.05)}
+.topic-btn.s1{border-color:rgba(96,165,250,.3)}
+.topic-btn .phase-pills{display:flex;gap:4px;margin-top:3px}
+.phase-pill{font-size:.58rem;font-weight:700;padding:2px 6px;border-radius:20px;border:1px solid var(--brd)}
+.phase-pill.done{background:rgba(52,211,153,.15);border-color:var(--grn);color:var(--grn)}
+.phase-pill.open{background:rgba(245,158,11,.1);border-color:var(--amber);color:var(--amber)}
+.phase-pill.locked{color:var(--muted)}
+
+.ach-section{background:var(--s1);border:1px solid var(--brd);border-radius:16px;padding:13px;margin-top:12px}
+.ach-section h3{font-size:.77rem;font-weight:800;color:var(--purple);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:9px}
+.ach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ach-item{text-align:center;opacity:.3;transition:all .3s}
+.ach-item.unlocked{opacity:1}
+.ach-item .ai{font-size:1.4rem;margin-bottom:3px}
+.ach-item .an{font-size:.6rem;color:var(--muted);line-height:1.3}
+.ach-item.unlocked .an{color:var(--purple)}
+
+.mia-note{background:var(--s1);border:1px solid var(--brd);border-left:4px solid var(--amber);
+  border-radius:12px;padding:11px 13px;margin-top:12px;display:flex;gap:9px;align-items:flex-start}
+.mia-note .ni{font-size:1.2rem;flex-shrink:0}
+.mia-note p{font-size:.77rem;color:var(--muted);line-height:1.6;font-style:italic}
+
+/* ── TOPIC INNER ────────────────────────────────────────────────────────── */
+.screen-inner{padding:14px 14px 60px}
+.back-row{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.back-btn{background:var(--s1);border:1px solid var(--brd);color:var(--muted);
+  padding:8px 12px;border-radius:10px;font-family:var(--fn);font-size:.81rem;
+  font-weight:700;cursor:pointer}
+.back-btn:active{background:var(--card)}
+
+/* Phase selector tabs */
+.phase-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+.phase-tab{flex-shrink:0;padding:8px 13px;border-radius:20px;border:1px solid var(--brd);
+  background:var(--s1);color:var(--muted);font-size:.78rem;font-weight:800;
+  font-family:var(--fn);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
+.phase-tab.active{background:rgba(245,158,11,.15);border-color:var(--amber);color:var(--amber)}
+.phase-tab.done-tab{background:rgba(52,211,153,.1);border-color:var(--grn);color:var(--grn)}
+.phase-tab.locked-tab{opacity:.45;cursor:not-allowed}
+
+/* Combo bar */
+.combo-bar{display:flex;align-items:center;justify-content:space-between;
+  background:var(--card);border:1px solid var(--brd);border-radius:12px;
+  padding:9px 13px;margin-bottom:12px}
+.combo-left{display:flex;align-items:center;gap:7px}
+.combo-flame{font-size:1.3rem;transition:transform .15s}
+.combo-count{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--amber)}
+.combo-label{font-size:.67rem;color:var(--muted)}
+.combo-mult{font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--grn2);
+  background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:8px;padding:3px 8px}
+
+/* Progress dots */
+.q-prog{display:flex;align-items:center;gap:7px;margin-bottom:12px}
+.dots{display:flex;gap:5px;flex:1}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--brd);transition:all .3s}
+.dot.dc{background:var(--grn)}.dot.dw{background:var(--red)}
+.dot.cur{background:var(--amber);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.5)}50%{box-shadow:0 0 0 5px rgba(245,158,11,0)}}
+.q-count{font-family:var(--mono);font-size:.78rem;color:var(--muted);white-space:nowrap}
+
+/* ── TUTORIAL PHASE ─────────────────────────────────────────────────────── */
+.tutorial-card{background:var(--card);border:1px solid var(--brd);border-radius:18px;
+  padding:18px;margin-bottom:12px}
+.tutorial-title{font-size:.7rem;color:var(--blue);text-transform:uppercase;letter-spacing:1.2px;
+  font-weight:700;margin-bottom:10px}
+.tutorial-context{background:rgba(96,165,250,.08);border-left:4px solid var(--blue);
+  border-radius:8px;padding:11px 14px;margin-bottom:14px;font-size:.87rem;
+  color:var(--txt);line-height:1.7;font-style:italic}
+.tutorial-steps{display:flex;flex-direction:column;gap:10px}
+.step-row{display:flex;gap:11px;align-items:flex-start}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--s1);border:2px solid var(--brd);
+  display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.78rem;
+  flex-shrink:0;color:var(--muted);font-family:var(--mono);transition:all .3s}
+.step-num.revealed{background:rgba(96,165,250,.15);border-color:var(--blue);color:var(--blue)}
+.step-content{flex:1;padding-top:3px}
+.step-label{font-size:.7rem;color:var(--blue);font-weight:700;margin-bottom:3px}
+.step-text{font-size:.88rem;color:var(--txt);line-height:1.6}
+.step-formula{font-family:var(--mono);background:var(--s1);border-left:3px solid var(--amber);
+  border-radius:7px;padding:8px 11px;margin-top:6px;font-size:.84rem;color:var(--amber2);
+  line-height:1.8;white-space:pre}
+.step-hidden{filter:blur(6px);user-select:none;transition:filter .4s}
+.step-hidden.revealed{filter:none}
+.reveal-btn{width:100%;padding:14px;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.3);
+  border-radius:12px;color:var(--blue);font-family:var(--fn);font-size:.9rem;font-weight:800;
+  cursor:pointer;margin-top:12px;transition:all .2s}
+.reveal-btn:active{background:rgba(96,165,250,.25)}
+.reveal-btn.done{background:var(--grn);border-color:var(--grn);color:#0d1b12}
+
+.formula-note-box{background:rgba(245,158,11,.07);border:1px dashed var(--amber);
+  border-radius:12px;padding:14px;margin-top:14px}
+.formula-note-box h4{font-size:.75rem;font-weight:800;color:var(--amber);margin-bottom:8px}
+.formula-note-box .fn-formula{font-family:var(--mono);font-size:.95rem;color:var(--amber2);
+  text-align:center;padding:8px 0;font-weight:700}
+.formula-note-box p{font-size:.75rem;color:var(--muted);margin-top:6px;line-height:1.5}
+
+.phase-next-btn{width:100%;padding:15px;background:var(--amber);color:#0d1b12;border:none;
+  border-radius:13px;font-size:.95rem;font-weight:900;font-family:var(--fn);
+  cursor:pointer;margin-top:14px;transition:all .2s}
+.phase-next-btn:active{background:var(--amber2)}
+
+/* ── QUESTION PHASE ─────────────────────────────────────────────────────── */
+.q-card{background:var(--card);border:1px solid var(--brd);border-radius:18px;
+  padding:17px;margin-bottom:11px;transition:border-color .3s}
+.q-card.qc{border-color:var(--grn);box-shadow:0 0 0 2px rgba(52,211,153,.18)}
+.q-card.qw{border-color:var(--red);box-shadow:0 0 0 2px rgba(248,113,113,.18)}
+.q-label{font-size:.67rem;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:6px}
+.q-label.lp{color:var(--purple)}.q-label.la{color:var(--amber)}.q-label.lb{color:var(--red)}
+.q-text{font-size:.96rem;line-height:1.6;margin-bottom:14px;white-space:pre-line}
+.boss-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(248,113,113,.12);
+  border:1px solid rgba(248,113,113,.3);border-radius:20px;padding:3px 10px;
+  font-size:.7rem;font-weight:700;color:var(--red);margin-bottom:10px}
+
+.q-opts{display:flex;flex-direction:column;gap:7px}
+.q-opt{background:var(--bg);border:2px solid var(--brd);color:var(--txt);
+  padding:13px 13px;border-radius:12px;text-align:left;font-size:.88rem;
+  font-family:var(--fn);font-weight:700;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;gap:9px}
+.q-opt:active:not(:disabled){transform:scale(.97)}
+.q-opt:disabled{cursor:default}
+.ol{width:26px;height:26px;border-radius:50%;background:var(--s1);
+  display:flex;align-items:center;justify-content:center;font-size:.76rem;
+  font-weight:900;flex-shrink:0;font-family:var(--mono);transition:all .2s}
+.q-opt.correct{border-color:var(--grn);background:rgba(52,211,153,.08)}
+.q-opt.correct .ol{background:var(--grn);color:#0d1b12}
+.q-opt.wrong{border-color:var(--red);background:rgba(248,113,113,.08);animation:ws .3s ease}
+@keyframes ws{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.q-opt.wrong .ol{background:var(--red);color:#0d1b12}
+.q-opt.reveal{border-color:var(--grn);background:rgba(52,211,153,.04)}
+
+.q-fb{border-radius:10px;padding:10px 13px;margin-top:9px;font-size:.83rem;line-height:1.6;display:none}
+.q-fb.ok{background:rgba(52,211,153,.1);border-left:4px solid var(--grn);color:var(--grn2)}
+.q-fb.nok{background:rgba(248,113,113,.1);border-left:4px solid var(--red);color:#fca5a5}
+.q-formula{background:var(--s1);border:1px solid var(--brd);border-left:4px solid var(--amber);
+  border-radius:9px;padding:9px 12px;margin-top:8px;font-family:var(--mono);
+  font-size:.79rem;color:var(--amber2);line-height:1.9;white-space:pre;display:none}
+
+.q-input-row{display:flex;gap:7px;align-items:center;margin-top:10px}
+.q-input{flex:1;padding:13px;background:var(--bg);border:2px solid var(--brd);
+  border-radius:11px;color:var(--txt);font-size:1.05rem;font-family:var(--mono);
+  text-align:center;transition:border-color .2s;-webkit-appearance:none}
+.q-input:focus{outline:none;border-color:var(--amber)}
+.q-input.ok{border-color:var(--grn);background:rgba(52,211,153,.07);animation:cp .3s ease}
+@keyframes cp{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+.q-input.nok{border-color:var(--red);background:rgba(248,113,113,.07);animation:ws .3s ease}
+.q-unit{font-size:.83rem;color:var(--muted);white-space:nowrap}
+.q-check-btn{padding:13px 16px;background:var(--grn);color:#0d1b12;border:none;
+  border-radius:11px;font-size:.9rem;font-weight:900;font-family:var(--fn);
+  cursor:pointer;white-space:nowrap;transition:all .2s}
+.q-check-btn:active{background:var(--grn2)}
+.q-check-btn:disabled{background:var(--brd);color:var(--muted)}
+
+.q-next{width:100%;padding:15px;background:var(--amber);color:#0d1b12;border:none;
+  border-radius:13px;font-size:.93rem;font-weight:900;font-family:var(--fn);
+  cursor:pointer;display:none;margin-top:9px;transition:all .2s}
+.q-next:active{background:var(--amber2)}
+
+
+/* ── NEU / REAKTIVIERUNG BADGE ───────────────────────────────────────────── */
+.topic-badge{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;
+  padding:2px 8px;border-radius:20px;margin-bottom:2px}
+.badge-new{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.badge-reaktiv{background:rgba(96,165,250,.12);color:var(--blue);border:1px solid rgba(96,165,250,.3)}
+.tut-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;
+  font-size:.72rem;font-weight:800;margin-bottom:10px}
+.tut-badge-new{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.tut-badge-rk{background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.25)}
+.tut-hint{font-size:.78rem;color:var(--muted);line-height:1.6;padding:10px 13px;
+  border-radius:10px;margin-bottom:12px}
+.tut-hint-new{background:rgba(248,113,113,.07);border-left:3px solid var(--red)}
+.tut-hint-rk{background:rgba(96,165,250,.07);border-left:3px solid var(--blue)}
+/* ── BOSS RECHENWEG TEXTAREA ─────────────────────────────────────────────── */
+.boss-rw-wrap{margin-top:12px;margin-bottom:4px}
+.boss-rw-label{font-size:.72rem;font-weight:700;color:var(--red);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:block}
+.boss-rw{
+  width:100%;min-height:88px;padding:11px 13px;
+  background:rgba(248,113,113,.05);border:2px dashed rgba(248,113,113,.35);
+  border-radius:11px;color:var(--txt);font-size:.92rem;
+  font-family:var(--mono);line-height:1.75;resize:vertical;
+  transition:border-color .2s;
+}
+.boss-rw:focus{outline:none;border-color:var(--red);background:rgba(248,113,113,.08)}
+.boss-rw::placeholder{color:var(--muted);font-size:.82rem}
+.boss-ans-label{font-size:.72rem;font-weight:700;color:var(--amber);
+  text-transform:uppercase;letter-spacing:1px;margin-top:10px;margin-bottom:6px;display:block}
+
+/* ── RESULT ─────────────────────────────────────────────────────────────── */
+.result-wrap{text-align:center;padding:16px 8px}
+.res-stars{font-size:2rem;margin-bottom:6px}
+.res-emoji{font-size:3rem;margin-bottom:8px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
+.res-title{font-size:1.3rem;font-weight:900;margin-bottom:4px}
+.res-score{font-family:var(--mono);font-size:1.1rem;font-weight:700;margin:10px 0}
+.res-xp{display:inline-flex;align-items:center;gap:7px;
+  background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);
+  border-radius:12px;padding:7px 14px;margin-bottom:14px;
+  font-family:var(--mono);font-size:.9rem;color:var(--amber);font-weight:700}
+
+/* Lernpass box */
+.lernpass{background:linear-gradient(135deg,rgba(52,211,153,.1),rgba(245,158,11,.08));
+  border:2px solid var(--grn);border-radius:16px;padding:18px;margin-bottom:16px}
+.lernpass h3{font-size:.82rem;font-weight:800;color:var(--grn);text-transform:uppercase;
+  letter-spacing:1px;margin-bottom:10px}
+.lernpass-code{font-family:var(--mono);font-size:2rem;font-weight:700;color:var(--amber2);
+  letter-spacing:8px;text-align:center;background:var(--s1);border-radius:12px;
+  padding:12px;margin:8px 0}
+.lernpass p{font-size:.77rem;color:var(--muted);text-align:center;line-height:1.5}
+.lernpass .lp-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.lp-detail{background:var(--s1);border-radius:10px;padding:8px;text-align:center}
+.lp-detail .ldv{font-family:var(--mono);font-size:.95rem;font-weight:700;color:var(--amber)}
+.lp-detail .ldl{font-size:.65rem;color:var(--muted)}
+
+.res-breakdown{background:var(--s1);border:1px solid var(--brd);border-radius:14px;
+  padding:13px;margin-bottom:14px;text-align:left}
+.res-breakdown h4{font-size:.76rem;color:var(--muted);text-transform:uppercase;
+  letter-spacing:1px;margin-bottom:9px}
+.rb-row{display:flex;justify-content:space-between;font-size:.8rem;
+  padding:4px 0;border-bottom:1px solid var(--brd)}
+.rb-row:last-child{border-bottom:none}
+.rb-label{color:var(--muted)}.rb-val{font-family:var(--mono);font-weight:700}
+.pos{color:var(--grn)}.neg{color:var(--red)}.acc{color:var(--amber)}
+
+.res-btns{display:flex;flex-direction:column;gap:8px}
+.r-btn{width:100%;padding:15px;border:none;border-radius:13px;font-size:.92rem;
+  font-weight:900;font-family:var(--fn);cursor:pointer}
+.r-btn.primary{background:var(--amber);color:#0d1b12}
+.r-btn.secondary{background:var(--s1);color:var(--muted);border:1px solid var(--brd)}
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+<div id="lu-overlay">
+  <div class="lu-box">
+    <div class="le" id="lu-emoji">⭐</div>
+    <h2 id="lu-title">Level Up!</h2>
+    <p id="lu-desc">Du hast ein neues Level erreicht!</p>
+    <button onclick="closeLU()">Weiter! 🚀</button>
+  </div>
+</div>
+<div id="toast-wrap"></div>
+
+<div id="root">
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">🎮</div>
+  <div class="tb-title">
+    <h1>Mias Mathe-Quest</h1>
+    <p id="tb-lvl">Level 1 – Anfängerin 🌱</p>
+  </div>
+  <div class="xp-block">
+    <div class="xp-num">⚡ <span id="tb-xp">0</span></div>
+    <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="screen-home">
+  <div class="home-hero">
+    <div class="avatar">🛍️</div>
+    <h2>Mias Mathe-Quest!</h2>
+    <p>Entdecke, übe, besiege den Boss – und schreibe deinen Lernpass ins Heft!</p>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-pill"><div class="sv xpc" id="s-xp">0</div><div class="sl">⚡ XP</div></div>
+    <div class="stat-pill"><div class="sv lvc" id="s-lvl">1</div><div class="sl">🏅 Level</div></div>
+    <div class="stat-pill"><div class="sv ach" id="s-ach">0/8</div><div class="sl">🏆 Badges</div></div>
+  </div>
+  <div class="topic-grid" id="topic-grid"></div>
+  <div class="ach-section">
+    <h3>🏆 Achievements</h3>
+    <div class="ach-grid" id="ach-grid"></div>
+  </div>
+  <div class="mia-note">
+    <div class="ni">💬</div>
+    <p id="home-quote">„Themen mit 🔁 kennst du aus Kl. 7/8 – direkt üben! Themen mit ✨ sind wirklich neu – Tutorial genau anschauen!“ 📓</p>
+  </div>
+</div>
+
+<!-- TOPIC SCREENS -->
+<div id="topic-screens"></div>
+</div>
+
+<script>
+/* ══ LEVELS ══════════════════════════════════════════════════════════════ */
+const LEVELS=[
+  {n:1,name:"Anfängerin",icon:"🌱",min:0},
+  {n:2,name:"Lernende",icon:"📚",min:60},
+  {n:3,name:"Fortgeschrittene",icon:"⚡",min:160},
+  {n:4,name:"Expertin",icon:"🔥",min:320},
+  {n:5,name:"Meisterin",icon:"🏆",min:550},
+];
+const getLevel=xp=>LEVELS.reduce((a,l)=>xp>=l.min?l:a,LEVELS[0]);
+const getNextLvl=xp=>LEVELS.find(l=>l.min>xp)||null;
+const xpPct=xp=>{const c=getLevel(xp),n=getNextLvl(xp);if(!n)return 100;return Math.min(100,Math.round((xp-c.min)/(n.min-c.min)*100));};
+
+/* ══ ACHIEVEMENTS ════════════════════════════════════════════════════════ */
+const ACHS=[
+  {id:"first",  icon:"🎉",name:"Erste Schritte",  desc:"Tutorial abgeschlossen"},
+  {id:"perfect",icon:"💫",name:"Perfekt!",         desc:"5/5 im Üben (alle richtig!)"},
+  {id:"boss",   icon:"💥",name:"Boss bezwungen",   desc:"Boss-Level bestanden"},
+  {id:"streak5",icon:"🔥",name:"Combo ×5",         desc:"5 richtig in Folge"},
+  {id:"allboss",icon:"👑",name:"Boss-Königin",     desc:"Alle Bosse besiegt"},
+  {id:"xp200",  icon:"⚡",name:"Energie-Boost",    desc:"200 XP gesammelt"},
+  {id:"all3",   icon:"🌟",name:"Drei Sterne",      desc:"3 Sterne in 3 Themen"},
+  {id:"all6",   icon:"🏆",name:"Gleichungs-Profi", desc:"Alle Themen gespielt"},
+];
+
+/* ══ TOPIC DATA ══════════════════════════════════════════════════════════ */
+const TOPICS=[
+  {
+    id:"add",icon:"➕",name:"Addition",ab:"AB-M1",isNew:false,hsKlasse:"7/8",
+    tutorial:{
+      context:"Mia bekommt 12 neue Aufkleber-Sets geliefert. Danach hat sie insgesamt 35. Wie viele hatte sie vorher?",
+      formula:"x + 12 = 35",
+      steps:[
+        {label:"Die Gleichung aufschreiben",text:"Wir nennen die unbekannte Menge x.\nBeides aufschreiben:",formula:"x + 12 = 35"},
+        {label:"Was stört uns?",text:"Auf der linken Seite von x steht '+12' zu viel.\nWir wollen x allein haben!"},
+        {label:"Umformen – beide Seiten gleich behandeln",text:"Was wir auf eine Seite tun, müssen wir auf beide tun.\nWir nehmen auf beiden Seiten 12 weg:",formula:"x + 12 = 35   / –12\n        x = 35 – 12\n        x = 23"},
+        {label:"Probe – stimmt das?",text:"Wir setzen x = 23 ein und prüfen:",formula:"23 + 12 = 35 ✓"},
+      ]
+    },
+    practice:[
+      {type:"mc",label:"Verstehen",text:"Was ist das Ziel beim Lösen?",
+       opts:["x so groß wie möglich","x allein auf einer Seite","Beide Seiten addieren","= entfernen"],c:1,
+       exp:"Ziel: x steht allein! Gleiche Operation auf beiden Seiten.",xp:10},
+      {type:"input",label:"Rechnen",text:"Löse: x + 9 = 27",ans:18,formula:"x + 9 = 27  /–9\n  x = 27 – 9 = 18",xp:10},
+      {type:"mc",label:"Anwenden",text:"Mia hat x Sets. Lieferung +12, danach 35. Welche Gleichung?",
+       opts:["x – 12 = 35","x + 12 = 35","12 + 35 = x","x = 35 · 12"],c:1,
+       exp:"x + 12 = 35 → Lagerbestand plus Lieferung gleich Gesamtmenge.",xp:15},
+      {type:"input",label:"Rechnen",text:"Löse: 8 + x = 21",ans:13,formula:"8 + x = 21  /–8\n  x = 13",xp:10},
+      {type:"mc",label:"Probe",text:"Stimmt x = 14 für x + 8 = 22?",
+       opts:["Ja – 14+8=22 ✓","Nein – 14+8=32","Nein – 14+8=20","Ja – 22–8=14"],c:0,
+       exp:"Probe: 14 + 8 = 22 ✓ Korrekt!",xp:15},
+    ],
+    boss:[
+      {type:"input",label:"Boss-Aufgabe",text:"Mia bestellt x Pakete Perlendraht. Zusammen mit 18 bereits vorhandenen Paketen hat sie jetzt 41 Pakete. Stelle die Gleichung auf und löse sie.",ans:23,formula:"x + 18 = 41  /–18\n  x = 41 – 18 = 23 Pakete",xp:30},
+      {type:"mc",label:"Boss-Aufgabe",text:"Welche Gleichung beschreibt: Tim hat 7 Euro mehr als Mia. Zusammen haben sie 43 Euro. Mias Geld = x.",
+       opts:["x + 7 = 43","x + (x+7) = 43","2x = 43","x – 7 = 43"],c:1,
+       exp:"Mia hat x, Tim hat x+7. Zusammen: x + (x+7) = 43 → 2x+7=43 → 2x=36 → x=18.",xp:30},
+    ]
+  },
+  {
+    id:"sub",icon:"➖",name:"Subtraktion",ab:"AB-M2",isNew:false,hsKlasse:"7/8",
+    tutorial:{
+      context:"Mia hatte x Euro in der Kasse. Sie hat 47 Euro für Materialien ausgegeben. Jetzt hat sie noch 78 Euro. Wie viel hatte sie vorher?",
+      formula:"x – 47 = 78",
+      steps:[
+        {label:"Die Gleichung aufschreiben",text:"Unbekannter Betrag: x\nAusgabe: 47 € abgezogen\nResult: 78 € übrig",formula:"x – 47 = 78"},
+        {label:"Typ 1: x – a = b",text:"47 wurde zu viel abgezogen.\nWir addieren 47 auf beiden Seiten:",formula:"x – 47 = 78   / +47\n        x = 78 + 47\n        x = 125"},
+        {label:"Typ 2: a – x = b",text:"Manchmal steht x im Abzug, z.B. 90 – x = 34.\nDann: x = 90 – 34",formula:"90 – x = 34  →  x = 90 – 34 = 56"},
+        {label:"Probe",text:"Setzen wir x = 125 in die Originalgleichung ein:",formula:"125 – 47 = 78 ✓"},
+      ]
+    },
+    practice:[
+      {type:"mc",label:"Verstehen",text:"Wie löst man x – 47 = 78?",
+       opts:["Beide Seiten –47","Beide Seiten ×47","Beide Seiten +47","Beide Seiten ÷47"],c:2,
+       exp:"x – 47 = 78  /+47 → x = 125. Zu viel abgezogen → addieren!",xp:10},
+      {type:"input",label:"Typ 1",text:"Löse: x – 11 = 25",ans:36,formula:"x – 11 = 25  /+11\n  x = 36",xp:10},
+      {type:"input",label:"Typ 1",text:"Löse: x – 30 = 15",ans:45,formula:"x – 30 = 15  /+30\n  x = 45",xp:10},
+      {type:"mc",label:"Typ 2",text:"Wie löst man 90 – x = 34?",
+       opts:["x = 90 + 34 = 124","x = 90 – 34 = 56","x = 34 – 90","x = 34 + 90"],c:1,
+       exp:"90 – x = 34 → x = 90 – 34 = 56",xp:15},
+      {type:"input",label:"Typ 2",text:"Löse: 50 – x = 23",ans:27,formula:"50 – x = 23  →  x = 50 – 23 = 27",xp:15},
+    ],
+    boss:[
+      {type:"input",label:"Boss-Aufgabe",text:"Mia hatte x Aufkleber auf Lager.\nSie hat 38 verkauft.\nJetzt hat sie noch 54 übrig.\nWie viele hatte sie am Anfang?",ans:92,formula:"x – 38 = 54  /+38\n  x = 54 + 38 = 92 Aufkleber",xp:30},
+      {type:"input",label:"Boss-Aufgabe",text:"Ein Konto hatte x Euro.\nNach einer Abbuchung von 175 € sind noch 340 € da.\nBerechne x.",ans:515,formula:"x – 175 = 340  /+175\n  x = 340 + 175 = 515 €",xp:30},
+    ]
+  },
+  {
+    id:"mul",icon:"✖️",name:"Multiplikation",ab:"AB-M3",isNew:false,hsKlasse:"7/8",
+    tutorial:{
+      context:"Mia verschickt jeden Tag gleich viele Pakete. In 6 Tagen hat sie insgesamt 48 Pakete verschickt. Wie viele Pakete pro Tag?",
+      formula:"6 · x = 48",
+      steps:[
+        {label:"Die Gleichung aufschreiben",text:"Pakete pro Tag: x\n6 Tage × x Pakete = 48 gesamt",formula:"6 · x = 48"},
+        {label:"Was stört uns?",text:"x wird mit 6 multipliziert.\nUm x allein zu haben, teilen wir durch 6:"},
+        {label:"Umformen",text:"Beide Seiten durch 6 teilen:",formula:"6 · x = 48   / :6\n       x = 48 : 6\n       x = 8"},
+        {label:"Probe",text:"Setzen wir x = 8 ein:",formula:"6 · 8 = 48 ✓"},
+      ]
+    },
+    practice:[
+      {type:"mc",label:"Verstehen",text:"Wie löst man 6 · x = 48?",
+       opts:["Beide Seiten +6","Beide Seiten –6","Beide Seiten ÷6","Beide Seiten ×6"],c:2,
+       exp:"6 · x = 48  /:6 → x = 8. Multipliziert → dividieren!",xp:10},
+      {type:"input",label:"Rechnen",text:"Löse: 4 · x = 36",ans:9,formula:"4 · x = 36  /:4\n  x = 9",xp:10},
+      {type:"input",label:"Rechnen",text:"Löse: 7 · x = 56",ans:8,formula:"7 · x = 56  /:7\n  x = 8",xp:10},
+      {type:"mc",label:"Anwenden",text:"5 Armbänder kosten 35 €. Welche Gleichung für den Einzelpreis x?",
+       opts:["5 + x = 35","5 – x = 35","5 · x = 35","35 · x = 5"],c:2,
+       exp:"5 · x = 35 → x = 7 €.",xp:15},
+      {type:"input",label:"★ Dezimal",text:"Löse: 2,50 · x = 15",ans:6,formula:"2,50 · x = 15  /:2,50\n  x = 6",xp:20},
+    ],
+    boss:[
+      {type:"input",label:"Boss-Aufgabe",text:"Mia kauft x gleich teure Sticker-Pakete.\nJedes Paket kostet 3,50 €.\nSie gibt insgesamt 24,50 € aus.\nWie viele Pakete kauft sie?",ans:7,formula:"3,50 · x = 24,50  /:3,50\n  x = 24,50 : 3,50 = 7 Pakete",xp:30},
+      {type:"mc",label:"Boss-Aufgabe",text:"Bei 4 · x = 4 · x + 12 – welche Aussage stimmt?",
+       opts:["x = 12","x = 3","Keine Lösung – beide Seiten können nie gleich sein","x = 0"],c:2,
+       exp:"4x = 4x + 12 → 0 = 12 → unmöglich! Keine Lösung.",xp:30},
+    ]
+  },
+  {
+    id:"div",icon:"➗",name:"Division",ab:"AB-M4",isNew:false,hsKlasse:"7/8",
+    tutorial:{
+      context:"Mia teilt ihren Gewinn von 175 € gleichmäßig auf mehrere Monate auf. Pro Monat erhält sie 35 €. Auf wie viele Monate verteilt sie?",
+      formula:"175 : x = 35",
+      steps:[
+        {label:"Typ 1 – x geteilt durch a",text:"Beispiel: x : 4 = 15\nx wird geteilt → wir multiplizieren auf beiden Seiten:",formula:"x : 4 = 15   / ·4\n       x = 15 · 4\n       x = 60"},
+        {label:"Typ 2 – a geteilt durch x",text:"Beispiel: 175 : x = 35\nDen Divisor x findet man durch:",formula:"175 : x = 35  →  x = 175 : 35\n               x = 5"},
+        {label:"Merke den Unterschied",text:"Typ 1: x : a = b  →  x = b · a\nTyp 2: a : x = b  →  x = a : b"},
+        {label:"Probe",text:"Setzen wir x = 5 ein:",formula:"175 : 5 = 35 ✓"},
+      ]
+    },
+    practice:[
+      {type:"mc",label:"Typ 1",text:"Wie löst man x : 4 = 15?",
+       opts:["Beide Seiten ÷4","Beide Seiten ×4","Beide Seiten +4","Beide Seiten –4"],c:1,
+       exp:"x : 4 = 15  /·4 → x = 60.",xp:10},
+      {type:"input",label:"Typ 1",text:"Löse: x : 6 = 7",ans:42,formula:"x : 6 = 7  /·6\n  x = 42",xp:10},
+      {type:"mc",label:"Typ 2",text:"Wie löst man 175 : x = 35?",
+       opts:["x = 175·35","x = 175+35","x = 175:35","x = 35–175"],c:2,
+       exp:"175 : x = 35 → x = 175 : 35 = 5",xp:15},
+      {type:"input",label:"Typ 2",text:"Löse: 175 : x = 35",ans:5,formula:"x = 175 : 35 = 5",xp:10},
+      {type:"input",label:"Typ 2",text:"Löse: 24 : x = 6",ans:4,formula:"x = 24 : 6 = 4",xp:15},
+    ],
+    boss:[
+      {type:"input",label:"Boss-Aufgabe",text:"Mia verteilt 216 Aufkleber gleichmäßig auf Pakete.\nJedes Paket enthält 12 Aufkleber.\nWie viele Pakete braucht sie? (x : 12 = 18 oder 216 : x = 12?)\n\nStelle die richtige Gleichung auf und löse.",ans:18,formula:"216 : x = 12\n  x = 216 : 12 = 18 Pakete",xp:30},
+      {type:"input",label:"Boss-Aufgabe",text:"Mia gibt x € für gleich viele Päckchen Verpackungsfolie aus.\nPro Päckchen: 4,50 €.\n36 € gesamt.\nWie viele Päckchen?",ans:8,formula:"x : 4,50 = 8? Nein:\n4,50 · x = 36  /:4,50\n  x = 8 Päckchen",xp:30},
+    ]
+  },
+  {
+    id:"both",icon:"⚖️",name:"Beide Seiten",ab:"AB-M5",isNew:true,hsKlasse:null,
+    tutorial:{
+      context:"Anbieter A: 6 € pro Bestellung + 18 € Grundgebühr. Anbieter B: 9 € pro Bestellung. Ab wie vielen Bestellungen (x) sind beide gleich teuer?",
+      formula:"6x + 18 = 9x",
+      steps:[
+        {label:"Gleichung aufschreiben",text:"Anbieter A: 6x + 18\nAnbieter B: 9x\nGleich teuer wenn:",formula:"6x + 18 = 9x"},
+        {label:"Schritt 1: Alle x auf eine Seite",text:"Wir ziehen 6x von beiden Seiten ab:",formula:"6x + 18 = 9x   / –6x\n         18 = 3x"},
+        {label:"Schritt 2: Zahlen auf die andere Seite",text:"Jetzt x allein rechnen:",formula:"18 = 3x   / :3\n 6 = x"},
+        {label:"Probe",text:"Ab 6 Bestellungen: A = 6·6+18 = 54, B = 9·6 = 54 ✓"},
+      ]
+    },
+    practice:[
+      {type:"mc",label:"Verstehen",text:"Erster Schritt bei 6x + 18 = 9x?",
+       opts:["Beide Seiten ×6","Alle x auf eine Seite","Beide Seiten +18","18÷6"],c:1,
+       exp:"Erst x-Terme sammeln: /–6x → 18=3x. Dann /:3 → x=6.",xp:10},
+      {type:"mc",label:"Rechnen",text:"Löse: 6x + 18 = 9x. Was ist x?",
+       opts:["x=3","x=6","x=9","x=18"],c:1,
+       exp:"6x+18=9x /–6x → 18=3x /:3 → x=6. Probe: 54=54 ✓",xp:15},
+      {type:"input",label:"Rechnen",text:"Löse: 3x + 12 = 7x – 4\n(Tipp: erst –3x, dann +4)",ans:4,formula:"3x+12=7x–4  /–3x\n12=4x–4  /+4\n16=4x  /:4  →  x=4",xp:15},
+      {type:"mc",label:"Rechnen",text:"Löse: 5x + 4 = 2x + 19. Welches x?",
+       opts:["x=4","x=5","x=7","x=15"],c:1,
+       exp:"5x+4=2x+19 /–2x → 3x+4=19 /–4 → 3x=15 /:3 → x=5",xp:15},
+      {type:"input",label:"Rechnen",text:"Löse: 2a + 30 = 5a + 6",ans:8,formula:"2a+30=5a+6 /–2a\n30=3a+6 /–6\n24=3a /:3  →  a=8",xp:20},
+    ],
+    boss:[
+      {type:"input",label:"Boss-Aufgabe",text:"Anbieter C: 4 € pro Aufkleber + 30 € Versand.\nAnbieter D: 10 € pro Aufkleber.\nAb wie vielen Aufklebern (x) ist C günstiger?",ans:5,formula:"4x+30 = 10x  /–4x\n30 = 6x  /:6\nx = 5\nAb mehr als 5 Aufklebern lohnt C.",xp:30},
+      {type:"mc",label:"Boss-Aufgabe",text:"Mia löst 12x – 5 = 4x + 11. Was ist x?",
+       opts:["x=1","x=2","x=3","x=16"],c:1,
+       exp:"12x–5=4x+11 /–4x → 8x–5=11 /+5 → 8x=16 /:8 → x=2",xp:30},
+    ]
+  },
+  {
+    id:"brackets",icon:"( )",name:"Klammern",ab:"AB-M6",isNew:true,hsKlasse:null,
+    tutorial:{
+      context:"Mia kauft 5 Verpackungsboxen. Jede kostet eigentlich x €, aber sie bekommt 3 € Rabatt pro Box. Sie zahlt insgesamt 35 €. Wie viel kostet eine Box ohne Rabatt?",
+      formula:"5 · (x – 3) = 35",
+      steps:[
+        {label:"Gleichung aufschreiben",text:"Preis pro Box mit Rabatt: (x – 3)\n5 Boxen: 5 · (x – 3) = 35"},
+        {label:"Klammer auflösen",text:"Distributivgesetz: a · (b – c) = a·b – a·c",formula:"5 · (x – 3) = 35\n5·x – 5·3 = 35\n    5x – 15 = 35"},
+        {label:"Gleichung lösen",text:"Jetzt wie gewohnt:",formula:"5x – 15 = 35   / +15\n       5x = 50   / :5\n        x = 10"},
+        {label:"Probe",text:"5 · (10 – 3) = 5 · 7 = 35 ✓"},
+      ]
+    },
+    practice:[
+      {type:"mc",label:"Verstehen",text:"Erster Schritt bei 5 · (x – 3) = 35?",
+       opts:["Durch 5 teilen","Klammer auflösen → 5x–15=35","3 addieren","35÷5"],c:1,
+       exp:"Erst auflösen: 5(x–3) = 5x–15. Dann lösen!",xp:10},
+      {type:"mc",label:"Auflösen",text:"5 · (x – 3) = 35 → ohne Klammer?",
+       opts:["5x – 3 = 35","5x – 15 = 35","5x + 15 = 35","x – 15 = 35"],c:1,
+       exp:"5·(x–3) = 5x – 5·3 = 5x – 15. Distributivgesetz!",xp:10},
+      {type:"input",label:"Rechnen",text:"Löse: 5 · (x – 3) = 35",ans:10,formula:"5(x–3)=35\n5x–15=35  /+15\n5x=50  /:5  →  x=10",xp:15},
+      {type:"input",label:"Rechnen",text:"Löse: 4 · (x + 2) = 28",ans:5,formula:"4(x+2)=28\n4x+8=28  /–8\n4x=20  /:4  →  x=5",xp:15},
+      {type:"input",label:"★ Textaufgabe",text:"3 Pakete à x Sticker\n+ 8 einzelne Sticker\n= 44 Sticker gesamt.\nWelche Gleichung? Löse sie.",ans:12,formula:"3x + 8 = 44  /–8\n3x = 36  /:3\n  x = 12 Sticker/Paket",xp:20},
+    ],
+    boss:[
+      {type:"input",label:"Boss-Aufgabe",text:"Mia und 4 Freundinnen teilen einen Gewinn.\nJede bekommt (x – 8) €.\nInsgesamt 5 · (x – 8) = 110 €.\nWie viel bekommt jede ohne Abzug?",ans:30,formula:"5(x–8)=110  /:5\nx–8=22  /+8\nx=30 €",xp:30},
+      {type:"mc",label:"Boss-Aufgabe",text:"Welche Gleichung hat keine Lösung?",
+       opts:["3(x+2)=15","2(x+1)=2x+2","4(x–1)=4x+1","x+5=2x"],c:2,
+       exp:"4(x–1)=4x+1 → 4x–4=4x+1 → –4=1 → unmöglich!",xp:30},
+    ]
+  },
+];
+
+/* ══ STATE ═══════════════════════════════════════════════════════════════ */
+const KEY='mia_quest_v4';
+function loadState(){try{const s=localStorage.getItem(KEY);if(s)return JSON.parse(s);}catch(e){}return{xp:0,scores:{},achs:[],maxCombo:0};}
+function saveState(){try{localStorage.setItem(KEY,JSON.stringify(ST));}catch(e){}}
+let ST=loadState();
+
+let curTopic=null,curPhase='tutorial',qIdx=0,qAnswered=false;
+let sRight=0,sWrong=0,sXP=0,combo=0,tutStep=0;
+
+/* ══ GAMIFICATION HELPERS ═════════════════════════════════════════════════ */
+function comboMult(c){return c>=5?2:c>=3?1.5:1;}
+function comboLabel(c){return c>=5?'×2.0 🔥🔥':c>=3?'×1.5 🔥':'×1.0';}
+function starsHTML(n){return['⭐','⭐','⭐'].map((s,i)=>i<n?s:'☆').join('');}
+function getStars(r,t){const p=r/t;return p>=1?3:p>=.67?2:p>=.33?1:0;}
+
+/* Lernpass code */
+function genCode(topicId,stars,xpEarned){
+  const idx=TOPICS.findIndex(t=>t.id===topicId)+1;
+  const base=idx*100+stars*20+Math.min(xpEarned,99);
+  return String(base).padStart(4,'0')+'-'+String(Math.round(xpEarned/10)).padStart(2,'0');
+}
+
+/* XP float */
+function showXPFloat(amount,el){
+  const rect=el.getBoundingClientRect();
+  const s=document.createElement('div');
+  s.className='xp-float';
+  s.textContent=`+${amount} XP ⚡`;
+  s.style.left=rect.left+'px';
+  s.style.top=(rect.top+window.scrollY-30)+'px';
+  document.body.appendChild(s);
+  setTimeout(()=>s.remove(),900);
+}
+
+/* Award XP */
+function awardXP(base,el){
+  const mult=comboMult(combo);
+  const amount=Math.round(base*mult);
+  const prev=ST.xp;
+  ST.xp+=amount;sXP+=amount;
+  const newLvl=getLevel(ST.xp),oldLvl=getLevel(prev);
+  if(newLvl.n>oldLvl.n) showLevelUp(newLvl);
+  showXPFloat(amount,el);
+  updateTopbar();
+}
+
+/* Topbar */
+function updateTopbar(){
+  const lv=getLevel(ST.xp);
+  document.getElementById('tb-xp').textContent=ST.xp;
+  document.getElementById('tb-lvl').textContent=`${lv.icon} ${lv.name}`;
+  document.getElementById('xp-bar').style.width=xpPct(ST.xp)+'%';
+  document.getElementById('s-xp').textContent=ST.xp;
+  document.getElementById('s-lvl').textContent=lv.n;
+  document.getElementById('s-ach').textContent=ST.achs.length+'/8';
+}
+
+/* Level up overlay */
+function showLevelUp(lv){
+  document.getElementById('lu-emoji').textContent=lv.icon;
+  document.getElementById('lu-title').textContent=`Level ${lv.n} erreicht!`;
+  document.getElementById('lu-desc').textContent=`Du bist jetzt: ${lv.name}`;
+  document.getElementById('lu-overlay').classList.add('show');
+  launchConfetti(2000);
+}
+function closeLU(){document.getElementById('lu-overlay').classList.remove('show');}
+
+/* Toast */
+function showToast(icon,title,desc){
+  const c=document.getElementById('toast-wrap');
+  const t=document.createElement('div');
+  t.className='toast';
+  t.innerHTML=`<div class="ti">${icon}</div><div class="tb"><h4>${title}</h4><p>${desc}</p></div>`;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.transition='opacity .4s';t.style.opacity='0';setTimeout(()=>t.remove(),400);},3000);
+}
+
+/* Achievements */
+function checkAchs(){
+  const add=(id)=>{
+    if(!ST.achs.includes(id)){
+      ST.achs.push(id);
+      const a=ACHS.find(x=>x.id===id);
+      if(a)showToast(a.icon,'Achievement!',a.name+' – '+a.desc);
+    }
+  };
+  const sc=ST.scores;
+  if(Object.keys(sc).some(k=>sc[k].tutorial))add('first');
+  if(Object.keys(sc).some(k=>sc[k].practiceScore===5))add('perfect');
+  if(Object.keys(sc).some(k=>sc[k].bossWon))add('boss');
+  if(ST.maxCombo>=5)add('streak5');
+  if(Object.keys(sc).filter(k=>sc[k].bossWon).length>=6)add('allboss');
+  if(ST.xp>=200)add('xp200');
+  if(Object.keys(sc).filter(k=>getStars(sc[k].practiceScore||0,5)===3).length>=3)add('all3');
+  if(Object.keys(sc).length>=6)add('all6');
+  saveState();
+}
+
+/* Confetti */
+function launchConfetti(dur=2500){
+  const cv=document.getElementById('confetti-canvas');
+  const ctx=cv.getContext('2d');
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const ps=[],cs=['#f59e0b','#34d399','#60a5fa','#f472b6','#a78bfa','#fbbf24'];
+  for(let i=0;i<110;i++)ps.push({x:Math.random()*cv.width,y:-10,r:Math.random()*6+3,
+    c:cs[Math.floor(Math.random()*cs.length)],vx:(Math.random()-.5)*6,vy:Math.random()*4+2,
+    rot:Math.random()*360,rv:(Math.random()-.5)*8,a:1});
+  const t0=Date.now();
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    const el=Date.now()-t0;
+    ps.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;p.rot+=p.rv;
+      if(el>dur-800)p.a=Math.max(0,p.a-.015);
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);
+      ctx.globalAlpha=p.a;ctx.fillStyle=p.c;ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);ctx.restore();
+    });
+    if(el<dur)requestAnimationFrame(draw);else ctx.clearRect(0,0,cv.width,cv.height);
+  }
+  draw();
+}
+
+/* ══ ROUTING ════════════════════════════════════════════════════════════ */
+function route(){
+  const hash=location.hash.replace('#','');
+  const t=TOPICS.find(x=>x.id===hash);
+  if(t)openTopic(t);else showHome();
+}
+window.addEventListener('hashchange',route);
+
+/* ══ HOME ═══════════════════════════════════════════════════════════════ */
+function showHome(){
+  const homeEl=document.getElementById('screen-home');
+  if(homeEl) homeEl.style.display='block';
+  document.getElementById('topic-screens').innerHTML='';
+  curTopic=null; curPhase='tutorial';
+  updateTopbar();
+  renderGrid();renderAchs();
+  // Sicherstellen, dass Topbar-Level aktuell ist
+  const lv=getLevel(ST.xp);
+  const quotes=[
+    '„Starte mit 🔍 Entdecken – dann 🎯 Üben – dann 💥 Boss besiegen! Lernpass-Code ins Heft nicht vergessen!" 📓',
+    `„Du bist Level ${lv.n}! Weiter so – nächstes Level bei ${(getNextLvl(ST.xp)||{min:'MAX'}).min} XP." ✨`,
+    '„Du sammelst XP wie eine Profi! Welche Achievements fehlen dir noch?" 🏆',
+    '„Fast alle Sterne! Du bist bereit für die Klassenarbeit!" 🌟',
+  ];
+  const qi=Math.min(Math.floor(ST.xp/120), quotes.length-1);
+  const qEl=document.getElementById('home-quote'); if(qEl) qEl.textContent=quotes[qi];
+}
+function renderGrid(){
+  const g=document.getElementById('topic-grid');g.innerHTML='';
+  TOPICS.forEach(t=>{
+    const sc=ST.scores[t.id]||{};
+    const stars=getStars(sc.practiceScore||0,5);
+    const cls='topic-btn'+(stars===3?' s3':stars===2?' s2':stars===1?' s1':'');
+    const phases=[
+      {l:'🔍 Entdecken',done:!!sc.tutorial},
+      {l:'🎯 Üben',done:sc.practiceScore>=3},
+      {l:'💥 Boss',done:!!sc.bossWon},
+    ];
+    const btn=document.createElement('div');
+    btn.className=cls;
+    const badge=t.isNew
+      ?`<div class="topic-badge badge-new">✨ Neu</div>`
+      :`<div class="topic-badge badge-reaktiv">🔁 Reaktivierung</div>`;
+    btn.innerHTML=`
+      <div class="ticon">${t.icon}</div>
+      ${badge}
+      <div class="tname">${t.name}</div>
+      <div class="stars">${stars>0?starsHTML(stars):'☆☆☆'}</div>
+      <div class="phase-pills">${phases.map(p=>`<div class="phase-pill ${p.done?'done':''}">${p.l}</div>`).join('')}</div>
+      <div class="tscore">${sc.practiceScore!=null?`Übung: ${sc.practiceScore}/5`:'Noch nicht gespielt'}</div>`;
+    btn.onclick=()=>{ location.hash=t.id; };
+    g.appendChild(btn);
+  });
+}
+function renderAchs(){
+  const ag=document.getElementById('ach-grid');ag.innerHTML='';
+  ACHS.forEach(a=>{
+    const ul=ST.achs.includes(a.id);
+    const el=document.createElement('div');
+    el.className='ach-item'+(ul?' unlocked':'');
+    el.title=a.desc;
+    el.innerHTML=`<div class="ai">${a.icon}</div><div class="an">${a.name}</div>`;
+    ag.appendChild(el);
+  });
+}
+
+/* ══ OPEN TOPIC ═════════════════════════════════════════════════════════ */
+function openTopic(t){
+  curTopic=t;
+  document.getElementById('screen-home').style.display='none';
+  buildTopicShell(t);
+  showPhase('tutorial');
+}
+function buildTopicShell(t){
+  const sc=ST.scores[t.id]||{};
+  const c=document.getElementById('topic-screens');
+  c.innerHTML=`
+    <div class="screen-inner">
+      <div class="back-row">
+        <button class="back-btn" onclick="location.hash=''">← Themen</button>
+        <span style="font-size:.77rem;color:var(--muted)">${t.icon} ${t.name} · ${t.ab}</span>
+        <span class="${t.isNew?'tut-badge tut-badge-new':'tut-badge tut-badge-rk'}">${t.isNew?'✨ Neu':'🔁 Reaktivierung'}</span>
+      </div>
+      <div class="phase-tabs">
+        <button class="phase-tab" id="tab-tutorial" onclick="showPhase('tutorial')">${t.isNew?'✨ Entdecken':'🔁 Erinnern'}</button>
+        <button class="phase-tab" id="tab-practice" onclick="showPhase('practice')">🎯 Üben</button>
+        <button class="phase-tab" id="tab-boss" onclick="showPhase('boss')">💥 Boss</button>
+      </div>
+      <div id="phase-content"></div>
+    </div>`;
+  updatePhaseTabs();
+}
+function updatePhaseTabs(){
+  const sc=ST.scores[curTopic?.id]||{};
+  const tabs=[
+    {id:'tutorial',done:!!sc.tutorial},
+    {id:'practice',done:sc.practiceScore>=3},
+    {id:'boss',done:!!sc.bossWon},
+  ];
+  tabs.forEach(({id,done})=>{
+    const btn=document.getElementById('tab-'+id);
+    if(!btn)return;
+    btn.className='phase-tab'+(curPhase===id?' active':done?' done-tab':'');
+  });
+}
+
+/* ══ TUTORIAL PHASE ═════════════════════════════════════════════════════ */
+function showPhase(phase){
+  curPhase=phase;updatePhaseTabs();
+  const area=document.getElementById('phase-content');
+  if(phase==='tutorial') renderTutorial(area);
+  else if(phase==='practice') startPractice(area);
+  else if(phase==='boss') startBoss(area);
+}
+
+function renderTutorial(area){
+  const t=curTopic;tutStep=0;
+  const steps=t.tutorial.steps;
+  const tutBadge=t.isNew
+    ?`<div class="tut-badge tut-badge-new">✨ Neueinführung – dieses Thema ist wirklich neu!</div>`
+    :`<div class="tut-badge tut-badge-rk">🔁 Erinnerung – du kennst das aus der Hauptschule (Kl. ${t.hsKlasse})!</div>`;
+  const tutHint=t.isNew
+    ?`<div class="tut-hint tut-hint-new">📌 Schau dir das Tutorial sorgfältig an – das hast du noch nicht gehabt. Schreibe die Formel ins Notizfeld auf deinem Arbeitsblatt!</div>`
+    :`<div class="tut-hint tut-hint-rk">💡 Dieses Tutorial ist eine Erinnerungshilfe. Wer das Verfahren noch gut kennt, kann direkt zum 🎯 Üben springen!</div>`;
+  area.innerHTML=`
+    <div class="tutorial-card">
+      <div class="tutorial-title">🔍 Entdecken – Schritt für Schritt</div>
+      ${tutBadge}
+      ${tutHint}
+      <div class="tutorial-context">💬 Mias Situation: ${t.tutorial.context}</div>
+      <div style="background:rgba(245,158,11,.1);border-radius:10px;padding:10px 13px;margin-bottom:14px;font-family:var(--mono);font-size:.95rem;color:var(--amber2);text-align:center;font-weight:700">${t.tutorial.formula}</div>
+      <div class="tutorial-steps" id="tut-steps">
+        ${steps.map((s,i)=>`
+          <div class="step-row" id="srow-${i}">
+            <div class="step-num${i===0?' revealed':''}" id="snum-${i}">${i+1}</div>
+            <div class="step-content step-hidden${i===0?'':''}" id="scont-${i}" style="${i>0?'filter:blur(6px)':''}">
+              <div class="step-label">${s.label}</div>
+              <div class="step-text" style="white-space:pre-line">${s.text}</div>
+              ${s.formula?`<div class="step-formula">${s.formula}</div>`:''}
+            </div>
+          </div>`).join('')}
+      </div>
+      <button class="reveal-btn" id="reveal-btn" onclick="revealNext()">
+        Nächster Schritt →
+      </button>
+      <div class="formula-note-box" id="note-box" style="display:none">
+        <h4>📝 Merke dir diese Formel für dein Heft:</h4>
+        <div class="fn-formula" id="fn-formula">${t.tutorial.formula}</div>
+        <p>→ Schreibe diese Formel jetzt in den Notizfeld-Kasten auf deinem Arbeitsblatt!</p>
+      </div>
+    </div>
+    <button class="phase-next-btn ${t.isNew?'':''}" id="tut-done-btn" style="display:none;background:${t.isNew?'var(--red)':'var(--amber)'}" onclick="finishTutorial()">
+      ${t.isNew?'✓ Neueinführung verstanden – weiter zum Üben! 🎯':'✓ Erinnerung aufgefrischt – weiter zum Üben! 🎯'}
+    </button>`;
+  // reveal step 0 immediately
+  document.getElementById('scont-0').style.filter='none';
+  document.getElementById('scont-0').classList.remove('step-hidden');
+  tutStep=1;
+  if(steps.length===1){ finishReveal(); }
+}
+
+function revealNext(){
+  const btn=document.getElementById('reveal-btn');
+  if(btn) btn.disabled=true; // sofort deaktivieren, verhindert Doppelklick
+  const t=curTopic;const steps=t.tutorial.steps;
+  if(tutStep>=steps.length){ finishReveal(); return; }
+  const cont=document.getElementById('scont-'+tutStep);
+  const num=document.getElementById('snum-'+tutStep);
+  if(cont){ cont.style.filter='none'; cont.classList.remove('step-hidden'); }
+  if(num){ num.classList.add('revealed'); }
+  tutStep++;
+  if(tutStep>=steps.length){ finishReveal(); return; }
+  if(btn) setTimeout(()=>{ btn.disabled=false; },300); // kurz warten, dann wieder freigeben
+}
+function finishReveal(){
+  const btn=document.getElementById('reveal-btn');
+  if(btn){ btn.textContent='✓ Alle Schritte enthüllt!'; btn.classList.add('done'); btn.disabled=true; }
+  const nb=document.getElementById('note-box');
+  if(nb) nb.style.display='block';
+  const db=document.getElementById('tut-done-btn');
+  if(db) db.style.display='block';
+}
+function finishTutorial(){
+  if(!ST.scores[curTopic.id]) ST.scores[curTopic.id]={};
+  ST.scores[curTopic.id].tutorial=true;
+  ST.xp+=20; // Tutorial-Bonus direkt in Gesamt-XP (nicht in sXP – sXP gehört zur Üben/Boss-Phase)
+  saveState(); checkAchs(); updateTopbar();
+  showToast('🔍','Tutorial +20 XP!','Super! Jetzt geht\'s ans Üben – sammle weitere XP!');
+  showPhase('practice');
+}
+
+/* ══ PRACTICE PHASE ════════════════════════════════════════════════════ */
+function startPractice(area){
+  qIdx=0;sRight=0;sWrong=0;sXP=0;combo=0;qAnswered=false;
+  const qs=curTopic.practice;
+  area.innerHTML=`
+    <div class="combo-bar">
+      <div class="combo-left">
+        <div class="combo-flame" id="cflame">🔥</div>
+        <div><div class="combo-count"><span id="cnum">0</span> Combo</div>
+        <div class="combo-label">Richtige in Folge</div></div>
+      </div>
+      <div class="combo-mult" id="cmult">×1.0</div>
+    </div>
+    <div class="q-prog"><div class="dots" id="dots">${qs.map((_,i)=>`<div class="dot${i===0?' cur':''}" id="dot-${i}"></div>`).join('')}</div>
+    <div class="q-count" id="qcount">1/${qs.length}</div></div>
+    <div id="q-area"></div>`;
+  renderQ(curTopic.practice,0,'practice');
+}
+
+function startBoss(area){
+  qIdx=0;sRight=0;sWrong=0;sXP=0;combo=0;qAnswered=false;
+  const qs=curTopic.boss;
+  area.innerHTML=`
+    <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:14px;padding:13px;margin-bottom:14px;text-align:center">
+      <div style="font-size:1.6rem;margin-bottom:6px">💥</div>
+      <div style="font-size:.9rem;font-weight:800;color:var(--red)">Boss-Level – Doppelte XP!</div>
+      <div style="font-size:.77rem;color:var(--muted);margin-top:4px">Schwieriger als das Üben – aber doppelte Belohnung!</div>
+    </div>
+    <div class="q-prog"><div class="dots" id="dots">${qs.map((_,i)=>`<div class="dot${i===0?' cur':''}" id="dot-${i}"></div>`).join('')}</div>
+    <div class="q-count" id="qcount">1/${qs.length}</div></div>
+    <div id="q-area"></div>`;
+  renderQ(curTopic.boss,0,'boss');
+}
+
+/* ══ QUESTION RENDER ════════════════════════════════════════════════════ */
+function renderQ(qs,idx,mode){
+  qIdx=idx;qAnswered=false;
+  const q=qs[idx];
+  const area=document.getElementById('q-area');
+  const isBoss=mode==='boss';
+  const labelCls=isBoss?'lb':'lp';
+  document.querySelectorAll('.dot').forEach((d,i)=>{
+    // keep existing done/wrong classes, just update cur
+    if(i===idx) d.classList.add('cur');
+    else d.classList.remove('cur');
+  });
+  const qn=document.getElementById('qcount');
+  if(qn) qn.textContent=`${idx+1}/${qs.length}`;
+
+  if(q.type==='mc'){
+    area.innerHTML=`
+      <div class="q-card" id="qcard">
+        ${isBoss?'<div class="boss-badge">💥 Boss-Aufgabe • ×2 XP</div>':''}
+        <div class="q-label ${labelCls}">${q.label}</div>
+        <div class="q-text">${q.text.replace(/\n/g,'<br>')}</div>
+        <div class="q-opts">
+          ${q.opts.map((o,i)=>`<button class="q-opt" id="opt-${i}" onclick="answerMC(${i})">
+            <div class="ol">${String.fromCharCode(65+i)}</div><div>${o}</div></button>`).join('')}
+        </div>
+        <div class="q-fb" id="qfb"></div>
+        <button class="q-next" id="qnxt" onclick="nextQ()">Weiter →</button>
+      </div>`;
+  } else {
+    // Boss-Aufgaben bekommen ein Rechenweg-Textfeld + separates Zahlen-Ergebnisfeld
+    const bossInputHTML = isBoss ? `
+      <div class="boss-rw-wrap">
+        <span class="boss-rw-label">📝 Rechenweg – Gleichung aufstellen:</span>
+        <textarea class="boss-rw" id="qrw" placeholder="z. B. x + 18 = 41  /–18\n  x = 41 – 18 = 23" rows="3"></textarea>
+      </div>
+      <span class="boss-ans-label">⚡ Ergebnis (nur die Zahl):</span>` : '';
+    area.innerHTML=`
+      <div class="q-card" id="qcard">
+        ${isBoss?'<div class="boss-badge">💥 Boss-Aufgabe • ×2 XP</div>':''}
+        <div class="q-label ${labelCls}">${q.label}</div>
+        <div class="q-text" style="white-space:pre-line">${q.text}</div>
+        ${bossInputHTML}
+        <div class="q-input-row">
+          <input class="q-input" type="number" id="qinp" step="0.01" placeholder="?" inputmode="decimal"
+            onkeydown="if(event.key==='Enter')checkInput()">
+          ${q.unit?`<span class="q-unit">${q.unit}</span>`:''}
+          <button class="q-check-btn" id="qchk" onclick="checkInput()">✓</button>
+        </div>
+        <div class="q-formula" id="qform" style="white-space:pre">${q.formula||''}</div>
+        <div class="q-fb" id="qfb"></div>
+        <button class="q-next" id="qnxt" onclick="nextQ()">Weiter →</button>
+      </div>`;
+    setTimeout(()=>{
+      const rw=document.getElementById('qrw');
+      if(rw) rw.focus();
+      else { const i=document.getElementById('qinp');if(i)i.focus(); }
+    },80);
+  }
+}
+
+/* ══ ANSWER HANDLERS ════════════════════════════════════════════════════ */
+function handleResult(correct,xpBase,el){
+  const q=(curPhase==='boss'?curTopic.boss:curTopic.practice)[qIdx];
+  const isBoss=curPhase==='boss';
+  const card=document.getElementById('qcard');
+  const fb=document.getElementById('qfb');
+  const dot=document.getElementById('dot-'+qIdx);
+  document.getElementById('qnxt').style.display='block';
+  if(correct){
+    combo++;if(combo>ST.maxCombo)ST.maxCombo=combo;
+    const xp=(isBoss?xpBase*2:xpBase);
+    awardXP(xp,el);sRight++;
+    card.classList.add('qc');if(dot)dot.className='dot dc';
+    fb.className='q-fb ok';fb.innerHTML='✅ Richtig! '+(q.exp||'');
+    if(combo===3)showToast('🔥','Combo ×3!','Bonus-Multiplikator: ×1.5');
+    if(combo===5)showToast('🌟','Combo ×5!','Mega-Boost: ×2.0 XP!');
+  } else {
+    combo=0;sWrong++;
+    card.classList.add('qw');if(dot)dot.className='dot dw';
+    fb.className='q-fb nok';fb.innerHTML='❌ Leider falsch. '+(q.exp||'');
+    const f=document.getElementById('qform');if(f)f.style.display='block';
+  }
+  fb.style.display='block';
+  const cn=document.getElementById('cnum');if(cn)cn.textContent=combo;
+  const cm=document.getElementById('cmult');if(cm)cm.textContent=comboLabel(combo);
+  const cf=document.getElementById('cflame');if(cf&&correct&&combo>1){
+    cf.style.transform='scale(1.3)';setTimeout(()=>cf.style.transform='',200);
+  }
+  saveState();
+}
+
+function answerMC(chosen){
+  if(qAnswered)return;qAnswered=true;
+  const qs=curPhase==='boss'?curTopic.boss:curTopic.practice;
+  const q=qs[qIdx];
+  document.querySelectorAll('.q-opt').forEach(b=>b.disabled=true);
+  const correct=chosen===q.c;
+  if(!correct)document.getElementById('opt-'+q.c).classList.add('reveal');
+  document.getElementById('opt-'+chosen).classList.add(correct?'correct':'wrong');
+  handleResult(correct,q.xp||10,document.getElementById('opt-'+chosen));
+}
+
+function checkInput(){
+  if(qAnswered)return;
+  const inp=document.getElementById('qinp');
+  const val=parseFloat(inp.value.replace(',','.'));
+  if(isNaN(val)){inp.focus();return;}
+  qAnswered=true;
+  const qs=curPhase==='boss'?curTopic.boss:curTopic.practice;
+  const q=qs[qIdx];
+  const tol=Math.max(0.05,Math.abs(q.ans)*.001);
+  const correct=Math.abs(val-q.ans)<=tol;
+  inp.classList.add(correct?'ok':'nok');
+  inp.disabled=true;document.getElementById('qchk').disabled=true;
+  if(!correct){
+    const fb=document.getElementById('qfb');
+    fb.className='q-fb nok';
+    fb.innerHTML=`❌ Richtig wäre: <strong>${q.ans}${q.unit?' '+q.unit:''}</strong>`;
+    fb.style.display='block';
+    document.getElementById('qcard').classList.add('qw');
+    const dot=document.getElementById('dot-'+qIdx);if(dot)dot.className='dot dw';
+    combo=0;sWrong++;
+    const f=document.getElementById('qform');if(f)f.style.display='block';
+    document.getElementById('qnxt').style.display='block';
+    const cn=document.getElementById('cnum');if(cn)cn.textContent=0;
+    const cm=document.getElementById('cmult');if(cm)cm.textContent=comboLabel(0);
+    saveState();
+  } else {
+    handleResult(true,q.xp||10,inp);
+    const fb=document.getElementById('qfb');
+    fb.className='q-fb ok';
+    fb.innerHTML=`✅ Richtig! ${q.ans}${q.unit?' '+q.unit:''}`;
+    fb.style.display='block';
+  }
+}
+
+function nextQ(){
+  const qs=curPhase==='boss'?curTopic.boss:curTopic.practice;
+  if(qIdx+1>=qs.length)showPhaseResult();
+  else renderQ(qs,qIdx+1,curPhase);
+}
+
+/* ══ PHASE RESULT ═══════════════════════════════════════════════════════ */
+function showPhaseResult(){
+  const t=curTopic;
+  const isBoss=curPhase==='boss';
+  const qs=isBoss?t.boss:t.practice;
+  const stars=getStars(sRight,qs.length);
+
+  if(!ST.scores[t.id])ST.scores[t.id]={};
+  if(isBoss){
+    if(sRight>=1)ST.scores[t.id].bossWon=true;
+  } else {
+    if((ST.scores[t.id].practiceScore||0)<sRight)
+      ST.scores[t.id].practiceScore=sRight;
+  }
+
+  // Bonus XP
+  const bonus=isBoss&&sRight===qs.length?40:stars===3?30:0;
+  if(bonus>0){ST.xp+=bonus;sXP+=bonus;updateTopbar();}
+
+  checkAchs();saveState();
+
+  if(stars===3)launchConfetti(3000);
+  else if(stars>=2)launchConfetti(1500);
+
+  const code=genCode(t.id,stars,sXP);
+  const emj={3:'🏆',2:'😊',1:'📚',0:'💪'}[stars];
+  const ttl={3:'Perfekt!',2:'Super!',1:'Gut versucht!',0:'Weiter üben!'}[stars];
+  const msg=isBoss
+    ? (sRight>=1?`Boss bezwungen! ${sRight}/${qs.length} Aufgaben richtig.`:`Noch nicht geschafft – probiere nochmal!`)
+    : {3:`Alle ${qs.length} Aufgaben richtig! 3 Sterne! 🌟`,
+       2:`${sRight}/${qs.length} richtig. Nochmal für 3 Sterne?`,
+       1:`${sRight}/${qs.length} richtig. Noch einmal üben!`,
+       0:`Schau dir das Tutorial nochmal an!`}[stars];
+
+  const area=document.getElementById('phase-content');
+  const dots=document.getElementById('dots');
+  if(dots)document.getElementById('qcount').textContent=`${qs.length}/${qs.length}`;
+
+  area.innerHTML=`
+    <div class="result-wrap">
+      ${!isBoss?`<div class="res-stars">${starsHTML(stars)}</div>`:''}
+      <div class="res-emoji">${emj}</div>
+      <div class="res-title" style="color:${stars>=2?'var(--amber)':'var(--muted)'}">${ttl}</div>
+      <div class="res-score" style="color:${stars>=2?'var(--grn)':'var(--red)'}">${sRight} / ${qs.length}</div>
+      <div class="res-xp">⚡ +${sXP} XP diese Runde${bonus>0?` (+${bonus} Bonus!)`:''}
+      </div>
+
+      <div class="lernpass">
+        <h3>📝 Dein Lernpass-Code</h3>
+        <div class="lernpass-code">${code}</div>
+        <p>Schreibe diesen Code in das Notizfeld auf deinem Arbeitsblatt!</p>
+        <div class="lp-details">
+          <div class="lp-detail"><div class="ldv">${starsHTML(stars)}</div><div class="ldl">Sterne</div></div>
+          <div class="lp-detail"><div class="ldv">+${sXP} ⚡</div><div class="ldl">XP verdient</div></div>
+          <div class="lp-detail"><div class="ldv">${sRight}/${qs.length}</div><div class="ldl">${isBoss?'Boss':'Üben'}</div></div>
+          <div class="lp-detail"><div class="ldv">${ST.maxCombo}🔥</div><div class="ldl">Max Combo</div></div>
+        </div>
+      </div>
+
+      <div class="res-breakdown">
+        <h4>Auswertung</h4>
+        <div class="rb-row"><span class="rb-label">Richtig</span><span class="rb-val pos">${sRight}</span></div>
+        <div class="rb-row"><span class="rb-label">Falsch</span><span class="rb-val neg">${sWrong}</span></div>
+        <div class="rb-row"><span class="rb-label">XP verdient</span><span class="rb-val acc">+${sXP} ⚡</span></div>
+        <div class="rb-row"><span class="rb-label">Bester Combo</span><span class="rb-val acc">${ST.maxCombo} 🔥</span></div>
+        <div class="rb-row"><span class="rb-label">Gesamt-XP</span><span class="rb-val pos">${ST.xp} ⚡</span></div>
+      </div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px;line-height:1.5">${msg}</p>
+      <div class="res-btns">
+        ${isBoss
+          ? `<button class="r-btn primary" onclick="startBoss(document.getElementById('phase-content'))">🔄 Nochmal</button>`
+          : `<button class="r-btn primary" onclick="startPractice(document.getElementById('phase-content'))">🔄 Nochmal üben</button>
+             <button class="r-btn secondary" style="background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--red)" onclick="showPhase('boss')">💥 Boss-Level</button>`}
+        <button class="r-btn secondary" onclick="location.hash=''">← Alle Themen</button>
+      </div>
+    </div>`;
+}
+
+/* ══ INIT ═══════════════════════════════════════════════════════════════ */
+showHome();
+route();
+</script>
+</body>
+</html>
