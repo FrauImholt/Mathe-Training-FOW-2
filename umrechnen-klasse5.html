@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Umrechnen – KA-Vorbereitung Klasse 5</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F6F3ED; --card:#FFF; --navy:#1B3A5C; --text:#2C3E50;
+  --muted:#8E99A4; --border:#E4DFD5; --radius:16px;
+  --shadow:0 2px 14px rgba(27,58,92,.08);
+  --shadow-lg:0 6px 28px rgba(27,58,92,.13);
+  --cat:#1565C0; --cat-light:#D6EAFF;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',system-ui,sans-serif;background:var(--bg);
+  min-height:100vh;display:flex;align-items:flex-start;justify-content:center;
+  padding:16px;color:var(--text)}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(circle at 1px 1px,#C4BDB0 1px,transparent 0);
+  background-size:26px 26px;opacity:.3;pointer-events:none;z-index:0}
+#app{position:relative;z-index:1;width:100%;max-width:580px;padding-top:6px}
+
+.screen{display:none}.screen.active{display:block}
+.hidden{display:none!important}
+.lbl{font-size:.72rem;font-weight:800;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--muted);margin-bottom:10px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:20px;border:1px solid var(--border);margin-bottom:14px}
+
+/* ══ TAB BAR (Start) ══ */
+.tab-bar{display:flex;gap:6px;margin-bottom:14px}
+.tab-btn{flex:1;padding:10px;border:2px solid var(--border);border-radius:10px;
+  background:white;font-family:inherit;font-size:.85rem;font-weight:700;
+  color:var(--muted);cursor:pointer;transition:all .18s}
+.tab-btn.active{background:var(--navy);color:white;border-color:var(--navy)}
+
+/* ══ START ══ */
+.hero{text-align:center;padding:20px 0 4px}
+.hero h1{font-size:2rem;font-weight:900;color:var(--navy);line-height:1.1}
+.hero p{font-size:.9rem;color:var(--muted);font-weight:600;margin-top:5px}
+.hero .ka-badge{display:inline-block;background:#FFF3CD;border:2px solid #FFC107;
+  color:#856404;border-radius:8px;padding:4px 12px;font-size:.78rem;font-weight:800;
+  margin-top:8px;letter-spacing:.04em}
+
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cat-tile{border:3px solid var(--border);border-radius:12px;padding:15px 8px;
+  cursor:pointer;text-align:center;font-family:inherit;background:#F8F5F0;
+  transition:all .18s}
+.cat-tile:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.cat-tile .icon{font-size:1.9rem;display:block;margin-bottom:5px}
+.cat-tile .name{font-size:.86rem;font-weight:700;color:var(--text)}
+.cat-tile[data-cat="laengen"]{background:#EEF5FF}
+.cat-tile[data-cat="gewichte"]{background:#EEF8F1}
+.cat-tile[data-cat="zeiten"]{background:#FFF5EE}
+.cat-tile.sel[data-cat="laengen"]{border-color:#1565C0;background:#D6EAFF}
+.cat-tile.sel[data-cat="gewichte"]{border-color:#2E7D32;background:#CCEEDB}
+.cat-tile.sel[data-cat="zeiten"]{border-color:#BF360C;background:#FFE0CC}
+
+.btn-row{display:flex;gap:8px}
+.chip{flex:1;border:2px solid var(--border);border-radius:10px;padding:10px 6px;
+  cursor:pointer;font-family:inherit;font-size:.86rem;font-weight:700;
+  background:white;color:var(--text);transition:all .18s;text-align:center}
+.chip .ci{display:block;font-size:1.15rem;margin-bottom:3px}
+.chip:hover{border-color:var(--navy)}
+.chip.sel{background:var(--navy);color:white;border-color:var(--navy)}
+
+.btn-start{display:block;width:100%;padding:16px;background:var(--navy);color:white;
+  border:none;border-radius:14px;font-family:inherit;font-size:1.1rem;font-weight:800;
+  cursor:pointer;transition:all .18s;box-shadow:0 5px 0 #0D1F33;margin-top:4px}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 7px 0 #0D1F33}
+.btn-start:active{transform:translateY(3px);box-shadow:0 2px 0 #0D1F33}
+
+/* ══ LERNZETTEL ══ */
+.lernzettel{display:none}
+.lernzettel.active{display:block}
+.lz-section{margin-bottom:18px}
+.lz-section h3{font-size:1rem;font-weight:800;color:var(--navy);margin-bottom:10px;
+  display:flex;align-items:center;gap:8px}
+.lz-table{width:100%;border-collapse:collapse}
+.lz-table th{background:var(--cat-light);color:var(--cat);font-size:.78rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:.08em;padding:7px 10px;text-align:left}
+.lz-table td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:.92rem;font-weight:600}
+.lz-table tr:last-child td{border-bottom:none}
+.lz-table tr:nth-child(even) td{background:#FAFAF8}
+.lz-tip{background:#FFF8E1;border-left:4px solid #FFC107;padding:10px 14px;
+  border-radius:0 8px 8px 0;font-size:.88rem;font-weight:600;margin-top:8px;line-height:1.5}
+
+/* ══ GAME HEADER ══ */
+.game-hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.btn-back{width:42px;height:42px;flex-shrink:0;border:2px solid var(--border);
+  border-radius:10px;background:white;font-size:1.1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);
+  transition:all .15s;font-family:inherit}
+.btn-back:hover{background:#F0F4F8}
+.prog-wrap{flex:1}
+.prog-meta{display:flex;justify-content:space-between;font-size:.75rem;font-weight:700;
+  color:var(--muted);margin-bottom:6px}
+.prog-bar{height:8px;background:var(--border);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:var(--cat);border-radius:99px;
+  transition:width .4s cubic-bezier(.34,1.56,.64,1)}
+.score-pill{background:white;border:2px solid var(--border);border-radius:10px;
+  padding:6px 13px;font-weight:900;font-size:.9rem;color:var(--navy);
+  box-shadow:var(--shadow);white-space:nowrap}
+
+/* ══ QUESTION CARD ══ */
+.q-card{background:white;border-radius:20px;border-top:6px solid var(--cat);
+  padding:24px 20px;text-align:center;box-shadow:var(--shadow-lg);margin-bottom:16px}
+.q-tag{display:inline-block;background:var(--cat-light);color:var(--cat);font-size:.7rem;
+  font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:4px 12px;
+  border-radius:99px;margin-bottom:14px}
+.q-text{font-size:1.8rem;font-weight:900;color:var(--navy);line-height:1.2}
+
+/* ══ QUIZ ══ */
+.ans-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px}
+.ans-btn{border:3px solid var(--border);border-radius:12px;padding:14px 10px;
+  cursor:pointer;font-family:inherit;font-size:1.05rem;font-weight:700;
+  background:white;color:var(--text);transition:all .18s;min-height:56px}
+.ans-btn:hover:not(:disabled){border-color:var(--cat);background:var(--cat-light);
+  transform:translateY(-2px);box-shadow:var(--shadow)}
+.ans-btn.correct{border-color:#2E7D32;background:#E8F5E9;color:#2E7D32}
+.ans-btn.wrong{border-color:#C62828;background:#FFEBEE;color:#C62828}
+.ans-btn:disabled{cursor:default}
+
+/* ══ EINGABE ══ */
+.ein-wrap{display:flex;gap:10px}
+.num-inp{flex:1;border:3px solid var(--border);border-radius:12px;padding:13px 14px;
+  font-family:inherit;font-size:1.4rem;font-weight:700;text-align:center;outline:none;
+  color:var(--navy);transition:border-color .2s;-moz-appearance:textfield}
+.num-inp::-webkit-inner-spin-button,.num-inp::-webkit-outer-spin-button{-webkit-appearance:none}
+.num-inp:focus{border-color:var(--cat)}
+.num-inp.correct{border-color:#2E7D32;background:#E8F5E9}
+.num-inp.wrong{border-color:#C62828;background:#FFEBEE}
+.btn-ok{padding:13px 20px;background:var(--cat);color:white;border:none;
+  border-radius:12px;font-family:inherit;font-size:1rem;font-weight:800;
+  cursor:pointer;transition:all .18s;white-space:nowrap}
+.btn-ok:hover{opacity:.88}
+
+/* ══ FEEDBACK + NEXT ══ */
+.fb{min-height:30px;text-align:center;font-weight:700;font-size:.95rem;margin:12px 0 8px}
+.fb.ok{color:#2E7D32}.fb.err{color:#C62828}
+.btn-next{display:none;width:100%;padding:14px;background:var(--cat);color:white;
+  border:none;border-radius:12px;font-family:inherit;font-size:1.05rem;font-weight:800;
+  cursor:pointer;transition:all .18s;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.btn-next.show{display:block}
+.btn-next:hover{transform:translateY(-2px);box-shadow:0 6px 0 rgba(0,0,0,.18)}
+
+/* ══ ZUORDNEN ══ */
+.zu-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.zu-col-lbl{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);margin-bottom:8px;text-align:center}
+.zu-card{border:3px solid var(--border);border-radius:11px;padding:10px 8px;
+  text-align:center;font-weight:700;font-size:.91rem;cursor:pointer;
+  background:white;color:var(--text);transition:all .18s;margin-bottom:8px;
+  min-height:44px;display:flex;align-items:center;justify-content:center}
+.zu-card:last-child{margin-bottom:0}
+.zu-card:hover:not(.matched){border-color:var(--cat);background:var(--cat-light)}
+.zu-card.sel{border-color:var(--cat);background:var(--cat-light);color:var(--cat);
+  font-weight:800;transform:scale(1.03)}
+.zu-card.matched{border-color:#2E7D32;background:#E8F5E9;color:#2E7D32;cursor:default}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}
+  60%{transform:translateX(6px)}80%{transform:translateX(-3px)}}
+.zu-card.bad{animation:shake .35s ease;border-color:#C62828;background:#FFEBEE}
+
+/* ══ RESULT ══ */
+.result-top{background:white;border-radius:24px;padding:32px 24px 24px;
+  text-align:center;box-shadow:var(--shadow-lg);margin-top:24px;margin-bottom:14px}
+.r-trophy{font-size:3.6rem;margin-bottom:6px}
+.r-title{font-size:1.8rem;font-weight:900;color:var(--navy)}
+.r-stars{font-size:2rem;letter-spacing:5px;margin:8px 0}
+.r-score-num{font-size:3.8rem;font-weight:900;color:var(--cat);line-height:1}
+.r-score-of{font-size:.9rem;color:var(--muted);font-weight:700;margin-top:3px}
+.r-msg{font-size:.94rem;font-weight:600;color:var(--text);margin:12px 0 20px}
+.r-btns{display:flex;gap:10px}
+.btn-r{flex:1;padding:14px;border-radius:12px;font-family:inherit;font-size:.95rem;
+  font-weight:800;cursor:pointer;border:none;transition:all .18s}
+.btn-r.primary{background:var(--cat);color:white;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+.btn-r.secondary{background:#F0F4F8;color:var(--navy);border:2px solid var(--border)}
+.btn-r:hover{transform:translateY(-2px)}
+
+/* ── Fehlerübersicht ── */
+.fehler-section{background:white;border-radius:var(--radius);box-shadow:var(--shadow);
+  border:1px solid var(--border);overflow:hidden;margin-bottom:14px}
+.fehler-header{padding:14px 18px;background:#FFF8E1;border-bottom:1px solid #FFE082;
+  font-weight:800;font-size:.95rem;color:#5D4037;display:flex;align-items:center;gap:8px}
+.fehler-item{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;
+  align-items:flex-start;gap:12px;font-size:.88rem}
+.fehler-item:last-child{border-bottom:none}
+.fehler-item .fi-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.fehler-item .fi-q{font-weight:600;color:var(--text);flex:1}
+.fehler-item .fi-ans{font-weight:800;color:#C62828;font-size:.82rem;margin-top:2px}
+.fehler-item .fi-correct{font-weight:800;color:#2E7D32;font-size:.82rem}
+.no-fehler{padding:18px;text-align:center;font-weight:700;color:#2E7D32;font-size:.95rem}
+
+/* ══ ANIMATIONS ══ */
+@keyframes pop-in{0%{transform:scale(.85);opacity:0}70%{transform:scale(1.04)}
+  100%{transform:scale(1);opacity:1}}
+@keyframes slide-up{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.anim-pop{animation:pop-in .3s cubic-bezier(.34,1.56,.64,1) forwards}
+.anim-slide{animation:slide-up .28s ease forwards}
+
+/* Confetti */
+.confetti-p{position:fixed;pointer-events:none;z-index:9999}
+@keyframes cdrop{0%{transform:translateY(0) rotate(0deg);opacity:1}
+  100%{transform:translateY(110px) rotate(480deg);opacity:0}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ══════════ START ══════════ -->
+<div class="screen active" id="s-start">
+  <div class="hero">
+    <h1>🔢 Umrechnen üben</h1>
+    <p>Klasse 5 · Längen · Gewichte · Zeiten</p>
+    <span class="ka-badge">📋 KA-Vorbereitung</span>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('ueben',this)">🎮 Üben</button>
+    <button class="tab-btn" onclick="switchTab('lernzettel',this)">📖 Lernzettel</button>
+  </div>
+
+  <!-- ÜBEN TAB -->
+  <div id="tab-ueben">
+    <div class="card">
+      <div class="lbl">📂 Thema wählen</div>
+      <div class="cat-grid">
+        <button class="cat-tile" data-cat="laengen" onclick="selCat(this)">
+          <span class="icon">📏</span><span class="name">Längen</span>
+        </button>
+        <button class="cat-tile" data-cat="gewichte" onclick="selCat(this)">
+          <span class="icon">⚖️</span><span class="name">Gewichte</span>
+        </button>
+        <button class="cat-tile" data-cat="zeiten" onclick="selCat(this)">
+          <span class="icon">⏱️</span><span class="name">Zeiten</span>
+        </button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="lbl">⚡ Schwierigkeit</div>
+      <div class="btn-row">
+        <button class="chip" data-diff="leicht" onclick="selDiff(this)"><span class="ci">🌱</span>Leicht</button>
+        <button class="chip" data-diff="mittel"  onclick="selDiff(this)"><span class="ci">⚡</span>Mittel</button>
+        <button class="chip" data-diff="schwer"  onclick="selDiff(this)"><span class="ci">🔥</span>Schwer</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="lbl">🎮 Spielmodus</div>
+      <div class="btn-row">
+        <button class="chip" data-mode="quiz"     onclick="selMode(this)"><span class="ci">📝</span>Quiz</button>
+        <button class="chip" data-mode="eingabe"  onclick="selMode(this)"><span class="ci">✏️</span>Eingabe</button>
+        <button class="chip" data-mode="zuordnen" onclick="selMode(this)"><span class="ci">🔗</span>Zuordnen</button>
+      </div>
+    </div>
+    <button class="btn-start" onclick="startGame()">Spiel starten ▶</button>
+  </div>
+
+  <!-- LERNZETTEL TAB -->
+  <div id="tab-lernzettel" class="hidden">
+
+    <div class="card lz-section">
+      <h3>📏 Längenmaße</h3>
+      <table class="lz-table">
+        <tr><th>Einheit</th><th>Abkürzung</th><th>Umrechnung</th></tr>
+        <tr><td>Kilometer</td><td><strong>km</strong></td><td>1 km = 1000 m</td></tr>
+        <tr><td>Meter</td><td><strong>m</strong></td><td>1 m = 10 dm = 100 cm = 1000 mm</td></tr>
+        <tr><td>Dezimeter</td><td><strong>dm</strong></td><td>1 dm = 10 cm = 100 mm</td></tr>
+        <tr><td>Zentimeter</td><td><strong>cm</strong></td><td>1 cm = 10 mm</td></tr>
+        <tr><td>Millimeter</td><td><strong>mm</strong></td><td>kleinste Einheit hier</td></tr>
+      </table>
+      <div class="lz-tip">💡 <strong>Trick:</strong> Von größer → kleiner = mal nehmen · Von kleiner → größer = teilen<br>
+      km → m: × 1000 &nbsp;|&nbsp; m → cm: × 100 &nbsp;|&nbsp; cm → mm: × 10</div>
+    </div>
+
+    <div class="card lz-section">
+      <h3>⚖️ Gewichte (Masse)</h3>
+      <table class="lz-table">
+        <tr><th>Einheit</th><th>Abkürzung</th><th>Umrechnung</th></tr>
+        <tr><td>Tonne</td><td><strong>t</strong></td><td>1 t = 1000 kg</td></tr>
+        <tr><td>Kilogramm</td><td><strong>kg</strong></td><td>1 kg = 1000 g</td></tr>
+        <tr><td>Gramm</td><td><strong>g</strong></td><td>1 g = 1000 mg</td></tr>
+        <tr><td>Milligramm</td><td><strong>mg</strong></td><td>kleinste Einheit hier</td></tr>
+      </table>
+      <div class="lz-tip">💡 Jede Einheit ist <strong>1000-mal</strong> größer als die nächste.<br>
+      t → kg: × 1000 &nbsp;|&nbsp; kg → g: × 1000 &nbsp;|&nbsp; g → mg: × 1000</div>
+    </div>
+
+    <div class="card lz-section">
+      <h3>⏱️ Zeitmaße</h3>
+      <table class="lz-table">
+        <tr><th>Einheit</th><th>Abkürzung</th><th>Umrechnung</th></tr>
+        <tr><td>Jahrhundert</td><td>–</td><td>1 Jahrhundert = 100 Jahre</td></tr>
+        <tr><td>Jahrzehnt</td><td>–</td><td>1 Jahrzehnt = 10 Jahre</td></tr>
+        <tr><td>Jahr</td><td><strong>a</strong></td><td>1 Jahr = 12 Monate = 52 Wochen ≈ 365 Tage</td></tr>
+        <tr><td>Monat</td><td>–</td><td>1 Monat ≈ 30 Tage (je nach Monat)</td></tr>
+        <tr><td>Woche</td><td>–</td><td>1 Woche = 7 Tage</td></tr>
+        <tr><td>Tag</td><td><strong>d</strong></td><td>1 Tag = 24 h = 1440 min = 86 400 s</td></tr>
+        <tr><td>Stunde</td><td><strong>h</strong></td><td>1 h = 60 min = 3600 s</td></tr>
+        <tr><td>Minute</td><td><strong>min</strong></td><td>1 min = 60 s</td></tr>
+        <tr><td>Sekunde</td><td><strong>s</strong></td><td>kleinste Einheit hier</td></tr>
+      </table>
+      <div class="lz-tip">💡 Merkhilfe gemischte Angaben:<br>
+      3 h 20 min = 3 × 60 min + 20 min = 180 min + 20 min = <strong>200 min</strong></div>
+    </div>
+
+  </div><!-- tab-lernzettel -->
+</div>
+
+<!-- ══════════ QUIZ + EINGABE ══════════ -->
+<div class="screen" id="s-game">
+  <div class="game-hdr">
+    <button class="btn-back" onclick="confirmBack()">←</button>
+    <div class="prog-wrap">
+      <div class="prog-meta">
+        <span id="g-qnum">Frage 1 / 10</span>
+        <span id="g-cat">Längen</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="g-fill" style="width:10%"></div></div>
+    </div>
+    <div class="score-pill">✅ <span id="g-score">0</span></div>
+  </div>
+
+  <div class="q-card" id="g-qcard">
+    <div class="q-tag" id="g-qtag">📏 Längen</div>
+    <div class="q-text" id="g-qtext">1 m = ___ cm</div>
+  </div>
+
+  <div id="g-quiz" class="ans-grid"></div>
+
+  <div id="g-eingabe" class="hidden">
+    <div class="ein-wrap">
+      <input type="text" inputmode="decimal" class="num-inp" id="g-input"
+        placeholder="?" onkeydown="if(event.key==='Enter')checkEingabe()">
+      <button class="btn-ok" onclick="checkEingabe()">OK ✓</button>
+    </div>
+  </div>
+
+  <div class="fb" id="g-fb"></div>
+  <button class="btn-next" id="g-next" onclick="nextQ()">Weiter →</button>
+</div>
+
+<!-- ══════════ ZUORDNEN ══════════ -->
+<div class="screen" id="s-zu">
+  <div class="game-hdr">
+    <button class="btn-back" onclick="confirmBack()">←</button>
+    <div class="prog-wrap">
+      <div class="prog-meta">
+        <span id="z-rnum">Runde 1 / 3</span>
+        <span id="z-cat">Längen</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="z-fill" style="width:33%"></div></div>
+    </div>
+    <div class="score-pill">✅ <span id="z-score">0</span></div>
+  </div>
+
+  <div class="card" id="z-card">
+    <div class="zu-cols">
+      <div><div class="zu-col-lbl">Von</div><div id="z-left"></div></div>
+      <div><div class="zu-col-lbl">Entspricht</div><div id="z-right"></div></div>
+    </div>
+  </div>
+
+  <div class="fb" id="z-fb"></div>
+  <button class="btn-next" id="z-next" onclick="nextZu()">Weiter →</button>
+</div>
+
+<!-- ══════════ RESULT ══════════ -->
+<div class="screen" id="s-result">
+  <div class="result-top">
+    <div class="r-trophy" id="r-emoji">🏆</div>
+    <div class="r-title" id="r-title">Super!</div>
+    <div class="r-stars" id="r-stars">⭐⭐⭐</div>
+    <div style="margin:14px 0">
+      <div class="r-score-num" id="r-num">8</div>
+      <div class="r-score-of" id="r-of">von 10 Punkten</div>
+    </div>
+    <div class="r-msg" id="r-msg"></div>
+    <div class="r-btns">
+      <button class="btn-r primary"   onclick="retry()">🔄 Nochmal</button>
+      <button class="btn-r secondary" onclick="goStart()">🏠 Menü</button>
+    </div>
+  </div>
+
+  <!-- Fehlerübersicht -->
+  <div id="fehler-wrap"></div>
+
+</div>
+
+</div><!-- #app -->
+
+<script>
+/* ═══════ DATABASE ═══════ */
+const DB = {
+  laengen:{
+    name:'Längen', icon:'📏', color:'#1565C0', light:'#D6EAFF',
+    leicht:[
+      {q:'1 m = ___ cm',      a:100,   u:'cm', L:'1 m',       R:'100 cm'},
+      {q:'1 km = ___ m',      a:1000,  u:'m',  L:'1 km',      R:'1000 m'},
+      {q:'1 cm = ___ mm',     a:10,    u:'mm', L:'1 cm',      R:'10 mm'},
+      {q:'1 dm = ___ cm',     a:10,    u:'cm', L:'1 dm',      R:'10 cm'},
+      {q:'10 mm = ___ cm',    a:1,     u:'cm', L:'10 mm',     R:'1 cm'},
+      {q:'100 cm = ___ m',    a:1,     u:'m',  L:'100 cm',    R:'1 m'},
+      {q:'1000 m = ___ km',   a:1,     u:'km', L:'1000 m',    R:'1 km'},
+      {q:'10 cm = ___ dm',    a:1,     u:'dm', L:'10 cm',     R:'1 dm'},
+      {q:'2 m = ___ cm',      a:200,   u:'cm', L:'2 m',       R:'200 cm'},
+      {q:'3 km = ___ m',      a:3000,  u:'m',  L:'3 km',      R:'3000 m'},
+      {q:'5 cm = ___ mm',     a:50,    u:'mm', L:'5 cm',      R:'50 mm'},
+      {q:'4 dm = ___ cm',     a:40,    u:'cm', L:'4 dm',      R:'40 cm'},
+      {q:'5 m = ___ cm',      a:500,   u:'cm', L:'5 m',       R:'500 cm'},
+      {q:'2000 m = ___ km',   a:2,     u:'km', L:'2000 m',    R:'2 km'},
+      {q:'30 mm = ___ cm',    a:3,     u:'cm', L:'30 mm',     R:'3 cm'},
+    ],
+    mittel:[
+      {q:'350 cm = ___ dm',   a:35,   u:'dm', L:'350 cm',  R:'35 dm'},
+      {q:'1500 m = ___ km',   a:1.5,  u:'km', L:'1500 m',  R:'1,5 km'},
+      {q:'1 m = ___ dm',      a:10,   u:'dm', L:'1 m',     R:'10 dm'},
+      {q:'1 dm = ___ mm',     a:100,  u:'mm', L:'1 dm',    R:'100 mm'},
+      {q:'25 dm = ___ cm',    a:250,  u:'cm', L:'25 dm',   R:'250 cm'},
+      {q:'4 m = ___ dm',      a:40,   u:'dm', L:'4 m',     R:'40 dm'},
+      {q:'500 mm = ___ dm',   a:5,    u:'dm', L:'500 mm',  R:'5 dm'},
+      {q:'2500 m = ___ km',   a:2.5,  u:'km', L:'2500 m',  R:'2,5 km'},
+      {q:'120 cm = ___ dm',   a:12,   u:'dm', L:'120 cm',  R:'12 dm'},
+      {q:'450 mm = ___ cm',   a:45,   u:'cm', L:'450 mm',  R:'45 cm'},
+      {q:'3500 m = ___ km',   a:3.5,  u:'km', L:'3500 m',  R:'3,5 km'},
+      {q:'250 cm = ___ m',    a:2.5,  u:'m',  L:'250 cm',  R:'2,5 m'},
+      {q:'75 mm = ___ cm',    a:7.5,  u:'cm', L:'75 mm',   R:'7,5 cm'},
+      {q:'60 dm = ___ m',     a:6,    u:'m',  L:'60 dm',   R:'6 m'},
+      {q:'3000 mm = ___ m',   a:3,    u:'m',  L:'3000 mm', R:'3 m'},
+    ],
+    schwer:[
+      {q:'2,3 km = ___ m',       a:2300, u:'m',  L:'2,3 km',      R:'2300 m'},
+      {q:'1 m = ___ mm',         a:1000, u:'mm', L:'1 m',         R:'1000 mm'},
+      {q:'4500 m = ___ km',      a:4.5,  u:'km', L:'4500 m',      R:'4,5 km'},
+      {q:'1 m 20 cm = ___ cm',   a:120,  u:'cm', L:'1 m 20 cm',   R:'120 cm'},
+      {q:'2 m 50 cm = ___ cm',   a:250,  u:'cm', L:'2 m 50 cm',   R:'250 cm'},
+      {q:'3 km 200 m = ___ m',   a:3200, u:'m',  L:'3 km 200 m',  R:'3200 m'},
+      {q:'3,5 m = ___ mm',       a:3500, u:'mm', L:'3,5 m',       R:'3500 mm'},
+      {q:'0,5 km = ___ m',       a:500,  u:'m',  L:'0,5 km',      R:'500 m'},
+      {q:'1750 m = ___ km',      a:1.75, u:'km', L:'1750 m',      R:'1,75 km'},
+      {q:'2,5 dm = ___ mm',      a:250,  u:'mm', L:'2,5 dm',      R:'250 mm'},
+      {q:'1 dm 5 cm = ___ cm',   a:15,   u:'cm', L:'1 dm 5 cm',   R:'15 cm'},
+      {q:'4 m 30 cm = ___ cm',   a:430,  u:'cm', L:'4 m 30 cm',   R:'430 cm'},
+      {q:'850 m = ___ km',       a:0.85, u:'km', L:'850 m',       R:'0,85 km'},
+      {q:'3200 mm = ___ m',      a:3.2,  u:'m',  L:'3200 mm',     R:'3,2 m'},
+      {q:'5,5 km = ___ m',       a:5500, u:'m',  L:'5,5 km',      R:'5500 m'},
+    ]
+  },
+  gewichte:{
+    name:'Gewichte', icon:'⚖️', color:'#2E7D32', light:'#CCEEDB',
+    leicht:[
+      {q:'1 kg = ___ g',     a:1000, u:'g',  L:'1 kg',    R:'1000 g'},
+      {q:'1 t = ___ kg',     a:1000, u:'kg', L:'1 t',     R:'1000 kg'},
+      {q:'2 kg = ___ g',     a:2000, u:'g',  L:'2 kg',    R:'2000 g'},
+      {q:'3 t = ___ kg',     a:3000, u:'kg', L:'3 t',     R:'3000 kg'},
+      {q:'1000 g = ___ kg',  a:1,    u:'kg', L:'1000 g',  R:'1 kg'},
+      {q:'1000 kg = ___ t',  a:1,    u:'t',  L:'1000 kg', R:'1 t'},
+      {q:'5 kg = ___ g',     a:5000, u:'g',  L:'5 kg',    R:'5000 g'},
+      {q:'4 t = ___ kg',     a:4000, u:'kg', L:'4 t',     R:'4000 kg'},
+      {q:'3000 g = ___ kg',  a:3,    u:'kg', L:'3000 g',  R:'3 kg'},
+      {q:'2000 kg = ___ t',  a:2,    u:'t',  L:'2000 kg', R:'2 t'},
+      {q:'6 kg = ___ g',     a:6000, u:'g',  L:'6 kg',    R:'6000 g'},
+      {q:'7 t = ___ kg',     a:7000, u:'kg', L:'7 t',     R:'7000 kg'},
+      {q:'4000 g = ___ kg',  a:4,    u:'kg', L:'4000 g',  R:'4 kg'},
+      {q:'1 g = ___ mg',     a:1000, u:'mg', L:'1 g',     R:'1000 mg'},
+      {q:'5000 kg = ___ t',  a:5,    u:'t',  L:'5000 kg', R:'5 t'},
+    ],
+    mittel:[
+      {q:'1500 g = ___ kg',  a:1.5,  u:'kg', L:'1500 g',  R:'1,5 kg'},
+      {q:'2500 g = ___ kg',  a:2.5,  u:'kg', L:'2500 g',  R:'2,5 kg'},
+      {q:'1500 kg = ___ t',  a:1.5,  u:'t',  L:'1500 kg', R:'1,5 t'},
+      {q:'2500 kg = ___ t',  a:2.5,  u:'t',  L:'2500 kg', R:'2,5 t'},
+      {q:'5 g = ___ mg',     a:5000, u:'mg', L:'5 g',     R:'5000 mg'},
+      {q:'3000 mg = ___ g',  a:3,    u:'g',  L:'3000 mg', R:'3 g'},
+      {q:'3500 g = ___ kg',  a:3.5,  u:'kg', L:'3500 g',  R:'3,5 kg'},
+      {q:'500 g = ___ kg',   a:0.5,  u:'kg', L:'500 g',   R:'0,5 kg'},
+      {q:'2 g = ___ mg',     a:2000, u:'mg', L:'2 g',     R:'2000 mg'},
+      {q:'4500 kg = ___ t',  a:4.5,  u:'t',  L:'4500 kg', R:'4,5 t'},
+      {q:'500 mg = ___ g',   a:0.5,  u:'g',  L:'500 mg',  R:'0,5 g'},
+      {q:'750 g = ___ kg',   a:0.75, u:'kg', L:'750 g',   R:'0,75 kg'},
+      {q:'4000 mg = ___ g',  a:4,    u:'g',  L:'4000 mg', R:'4 g'},
+      {q:'250 g = ___ kg',   a:0.25, u:'kg', L:'250 g',   R:'0,25 kg'},
+      {q:'3500 kg = ___ t',  a:3.5,  u:'t',  L:'3500 kg', R:'3,5 t'},
+    ],
+    schwer:[
+      {q:'2 t 500 kg = ___ kg',  a:2500, u:'kg', L:'2 t 500 kg',  R:'2500 kg'},
+      {q:'1 kg 500 g = ___ g',   a:1500, u:'g',  L:'1 kg 500 g',  R:'1500 g'},
+      {q:'3,75 kg = ___ g',      a:3750, u:'g',  L:'3,75 kg',     R:'3750 g'},
+      {q:'1250 g = ___ kg',      a:1.25, u:'kg', L:'1250 g',      R:'1,25 kg'},
+      {q:'4 t 250 kg = ___ kg',  a:4250, u:'kg', L:'4 t 250 kg',  R:'4250 kg'},
+      {q:'2 kg 750 g = ___ g',   a:2750, u:'g',  L:'2 kg 750 g',  R:'2750 g'},
+      {q:'3500 mg = ___ g',      a:3.5,  u:'g',  L:'3500 mg',     R:'3,5 g'},
+      {q:'1,75 t = ___ kg',      a:1750, u:'kg', L:'1,75 t',      R:'1750 kg'},
+      {q:'5250 g = ___ kg',      a:5.25, u:'kg', L:'5250 g',      R:'5,25 kg'},
+      {q:'2 g 500 mg = ___ mg',  a:2500, u:'mg', L:'2 g 500 mg',  R:'2500 mg'},
+      {q:'3,2 kg = ___ g',       a:3200, u:'g',  L:'3,2 kg',      R:'3200 g'},
+      {q:'1800 mg = ___ g',      a:1.8,  u:'g',  L:'1800 mg',     R:'1,8 g'},
+      {q:'0,75 t = ___ kg',      a:750,  u:'kg', L:'0,75 t',      R:'750 kg'},
+      {q:'2,25 kg = ___ g',      a:2250, u:'g',  L:'2,25 kg',     R:'2250 g'},
+      {q:'6250 kg = ___ t',      a:6.25, u:'t',  L:'6250 kg',     R:'6,25 t'},
+    ]
+  },
+  zeiten:{
+    name:'Zeiten', icon:'⏱️', color:'#BF360C', light:'#FFE0CC',
+    leicht:[
+      {q:'1 h = ___ min',        a:60,  u:'min',    L:'1 h',     R:'60 min'},
+      {q:'1 min = ___ s',        a:60,  u:'s',      L:'1 min',   R:'60 s'},
+      {q:'2 h = ___ min',        a:120, u:'min',    L:'2 h',     R:'120 min'},
+      {q:'1 Tag = ___ h',        a:24,  u:'h',      L:'1 Tag',   R:'24 h'},
+      {q:'60 min = ___ h',       a:1,   u:'h',      L:'60 min',  R:'1 h'},
+      {q:'60 s = ___ min',       a:1,   u:'min',    L:'60 s',    R:'1 min'},
+      {q:'3 min = ___ s',        a:180, u:'s',      L:'3 min',   R:'180 s'},
+      {q:'2 Tage = ___ h',       a:48,  u:'h',      L:'2 Tage',  R:'48 h'},
+      {q:'1 Woche = ___ Tage',   a:7,   u:'Tage',   L:'1 Woche', R:'7 Tage'},
+      {q:'1 Jahr = ___ Monate',  a:12,  u:'Monate', L:'1 Jahr',  R:'12 Monate'},
+      {q:'1 Jahr = ___ Tage',    a:365, u:'Tage',   L:'1 Jahr',  R:'365 Tage'},
+      {q:'24 h = ___ Tag',       a:1,   u:'Tag',    L:'24 h',    R:'1 Tag'},
+      {q:'4 min = ___ s',        a:240, u:'s',      L:'4 min',   R:'240 s'},
+      {q:'3 h = ___ min',        a:180, u:'min',    L:'3 h',     R:'180 min'},
+      {q:'48 h = ___ Tage',      a:2,   u:'Tage',   L:'48 h',    R:'2 Tage'},
+    ],
+    mittel:[
+      {q:'1,5 h = ___ min',        a:90,  u:'min',    L:'1,5 h',      R:'90 min'},
+      {q:'90 min = ___ h',         a:1.5, u:'h',      L:'90 min',     R:'1,5 h'},
+      {q:'2 h 30 min = ___ min',   a:150, u:'min',    L:'2 h 30 min', R:'150 min'},
+      {q:'1 h 45 min = ___ min',   a:105, u:'min',    L:'1 h 45 min', R:'105 min'},
+      {q:'2 Wochen = ___ Tage',    a:14,  u:'Tage',   L:'2 Wochen',   R:'14 Tage'},
+      {q:'3 Wochen = ___ Tage',    a:21,  u:'Tage',   L:'3 Wochen',   R:'21 Tage'},
+      {q:'2 Jahre = ___ Monate',   a:24,  u:'Monate', L:'2 Jahre',    R:'24 Monate'},
+      {q:'3 Jahre = ___ Monate',   a:36,  u:'Monate', L:'3 Jahre',    R:'36 Monate'},
+      {q:'120 s = ___ min',        a:2,   u:'min',    L:'120 s',      R:'2 min'},
+      {q:'5 min = ___ s',          a:300, u:'s',      L:'5 min',      R:'300 s'},
+      {q:'4 h = ___ min',          a:240, u:'min',    L:'4 h',        R:'240 min'},
+      {q:'5 Wochen = ___ Tage',    a:35,  u:'Tage',   L:'5 Wochen',   R:'35 Tage'},
+      {q:'3,5 h = ___ min',        a:210, u:'min',    L:'3,5 h',      R:'210 min'},
+      {q:'180 min = ___ h',        a:3,   u:'h',      L:'180 min',    R:'3 h'},
+      {q:'4 Jahre = ___ Monate',   a:48,  u:'Monate', L:'4 Jahre',    R:'48 Monate'},
+    ],
+    schwer:[
+      {q:'3 h 20 min = ___ min',      a:200,  u:'min',   L:'3 h 20 min',    R:'200 min'},
+      {q:'2 h 45 min = ___ min',      a:165,  u:'min',   L:'2 h 45 min',    R:'165 min'},
+      {q:'1 Woche = ___ h',           a:168,  u:'h',     L:'1 Woche',       R:'168 h'},
+      {q:'1 h 35 min = ___ min',      a:95,   u:'min',   L:'1 h 35 min',    R:'95 min'},
+      {q:'5 Tage = ___ h',            a:120,  u:'h',     L:'5 Tage',        R:'120 h'},
+      {q:'1 Tag = ___ min',           a:1440, u:'min',   L:'1 Tag',         R:'1440 min'},
+      {q:'1 h = ___ s',               a:3600, u:'s',     L:'1 h',           R:'3600 s'},
+      {q:'3 h 15 min = ___ min',      a:195,  u:'min',   L:'3 h 15 min',    R:'195 min'},
+      {q:'4 Wochen = ___ Tage',       a:28,   u:'Tage',  L:'4 Wochen',      R:'28 Tage'},
+      {q:'720 min = ___ h',           a:12,   u:'h',     L:'720 min',       R:'12 h'},
+      {q:'2 Tage 12 h = ___ h',       a:60,   u:'h',     L:'2 Tage 12 h',   R:'60 h'},
+      {q:'1 Jahrzehnt = ___ Jahre',   a:10,   u:'Jahre', L:'1 Jahrzehnt',   R:'10 Jahre'},
+      {q:'1 Jahrhundert = ___ Jahre', a:100,  u:'Jahre', L:'1 Jahrhundert', R:'100 Jahre'},
+      {q:'3600 s = ___ h',            a:1,    u:'h',     L:'3600 s',        R:'1 h'},
+      {q:'2,5 h = ___ min',           a:150,  u:'min',   L:'2,5 h',         R:'150 min'},
+    ]
+  }
+};
+
+/* ═══════ STATE ═══════ */
+const G = {
+  cat:null, diff:null, mode:null,
+  qs:[], qi:0, score:0, answered:false,
+  mistakes:[], // {q, given, correct, unit}
+  zRound:0, zRounds:[], zScore:0,
+  zSelLeft:null, zMatched:0, zTotal:0, zMistakes:[]
+};
+
+/* ═══════ TABS ═══════ */
+function switchTab(tab, btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  $('tab-ueben').classList.toggle('hidden', tab!=='ueben');
+  $('tab-lernzettel').classList.toggle('hidden', tab!=='lernzettel');
+}
+
+/* ═══════ SELECTION ═══════ */
+function selCat(el){
+  document.querySelectorAll('.cat-tile').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel'); G.cat=el.dataset.cat;
+}
+function selDiff(el){
+  document.querySelectorAll('[data-diff]').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel'); G.diff=el.dataset.diff;
+}
+function selMode(el){
+  document.querySelectorAll('[data-mode]').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel'); G.mode=el.dataset.mode;
+}
+
+/* ═══════ SCREENS ═══════ */
+function showSc(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+function confirmBack(){
+  if(confirm('Möchtest du das Spiel beenden?')) goStart();
+}
+function goStart(){
+  showSc('s-start');
+  // reset tab to Üben
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',i===0);
+  });
+  $('tab-ueben').classList.remove('hidden');
+  $('tab-lernzettel').classList.add('hidden');
+}
+
+function applyTheme(cat){
+  document.documentElement.style.setProperty('--cat',cat.color);
+  document.documentElement.style.setProperty('--cat-light',cat.light);
+}
+
+/* ═══════ START ═══════ */
+function startGame(){
+  if(!G.cat)  return alert('Bitte wähle ein Thema!');
+  if(!G.diff) return alert('Bitte wähle eine Schwierigkeit!');
+  if(!G.mode) return alert('Bitte wähle einen Spielmodus!');
+
+  applyTheme(DB[G.cat]);
+  const pool=shuffle([...DB[G.cat][G.diff]]);
+  G.mistakes=[];
+
+  if(G.mode==='zuordnen'){
+    G.zRound=0; G.zScore=0; G.zRounds=[]; G.zTotal=0; G.zMistakes=[];
+    for(let r=0;r<3;r++){
+      const rqs=pool.slice(r*5, r*5+5);
+      G.zRounds.push(rqs); G.zTotal+=rqs.length;
+    }
+    showSc('s-zu'); renderZuRound();
+  } else {
+    G.qs=pool.slice(0,10); G.qi=0; G.score=0;
+    showSc('s-game'); renderQ();
+  }
+}
+
+function retry(){ startGame(); }
+
+/* ═══════ QUIZ + EINGABE ═══════ */
+function renderQ(){
+  const q=G.qs[G.qi], n=G.qi+1, tot=G.qs.length, cat=DB[G.cat];
+  $('g-qnum').textContent=`Frage ${n} / ${tot}`;
+  $('g-cat').textContent=cat.name;
+  $('g-fill').style.width=`${(n/tot)*100}%`;
+  $('g-score').textContent=G.score;
+  $('g-qtag').textContent=`${cat.icon} ${cat.name}`;
+  $('g-qtext').textContent=q.q;
+  clearFb('g-fb');
+  const nb=$('g-next');
+  nb.classList.remove('show');
+  nb.textContent=(n===tot)?'Ergebnis anzeigen 🏆':'Weiter →';
+  G.answered=false;
+  anim($('g-qcard'),'anim-pop');
+
+  if(G.mode==='quiz'){
+    $('g-quiz').classList.remove('hidden');
+    $('g-eingabe').classList.add('hidden');
+    renderQuizAns(q);
+  } else {
+    $('g-quiz').classList.add('hidden');
+    $('g-eingabe').classList.remove('hidden');
+    const inp=$('g-input');
+    inp.value=''; inp.className='num-inp'; inp.disabled=false;
+    setTimeout(()=>inp.focus(),80);
+  }
+}
+
+function renderQuizAns(q){
+  const wrongs=genWrong(q.a, DB[G.cat][G.diff]);
+  const opts=shuffle([q.a,...wrongs]);
+  const c=$('g-quiz'); c.innerHTML='';
+  opts.forEach(v=>{
+    const b=document.createElement('button');
+    b.className='ans-btn';
+    b.textContent=fmt(v)+' '+q.u;
+    b.dataset.v=v;
+    b.onclick=()=>checkQuiz(b,v,q);
+    c.appendChild(b);
+  });
+}
+
+function checkQuiz(btn,selected,q){
+  if(G.answered)return; G.answered=true;
+  document.querySelectorAll('.ans-btn').forEach(b=>b.disabled=true);
+  const ok=Math.abs(selected-q.a)<0.001;
+  if(ok){
+    btn.classList.add('correct'); G.score++; $('g-score').textContent=G.score;
+    setFb('g-fb',goodMsg(),'ok'); confetti(btn);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.ans-btn').forEach(b=>{
+      if(Math.abs(parseFloat(b.dataset.v)-q.a)<0.001) b.classList.add('correct');
+    });
+    setFb('g-fb',badMsg()+`  ✔ ${fmt(q.a)} ${q.u}`,'err');
+    G.mistakes.push({q:q.q, given:fmt(selected)+' '+q.u, correct:fmt(q.a)+' '+q.u});
+  }
+  $('g-next').classList.add('show');
+}
+
+function checkEingabe(){
+  if(G.answered)return;
+  const inp=$('g-input');
+  const val=parseFloat(inp.value.replace(',','.'));
+  if(isNaN(val)){inp.focus();return;}
+  G.answered=true; inp.disabled=true;
+  const q=G.qs[G.qi];
+  const ok=Math.abs(val-q.a)<0.001;
+  if(ok){
+    inp.classList.add('correct'); G.score++; $('g-score').textContent=G.score;
+    setFb('g-fb',goodMsg(),'ok'); confetti(inp);
+  } else {
+    inp.classList.add('wrong');
+    setFb('g-fb',badMsg()+`  ✔ ${fmt(q.a)} ${q.u}`,'err');
+    G.mistakes.push({q:q.q, given:fmt(val)+' '+q.u, correct:fmt(q.a)+' '+q.u});
+  }
+  $('g-next').classList.add('show');
+}
+
+function nextQ(){
+  G.qi++;
+  if(G.qi>=G.qs.length) showResult(G.score, G.qs.length, G.mistakes);
+  else renderQ();
+}
+
+/* ═══════ ZUORDNEN ═══════ */
+function renderZuRound(){
+  const rqs=G.zRounds[G.zRound], cat=DB[G.cat];
+  const rn=G.zRound+1, tot=G.zRounds.length;
+  $('z-rnum').textContent=`Runde ${rn} / ${tot}`;
+  $('z-cat').textContent=cat.name;
+  $('z-fill').style.width=`${(rn/tot)*100}%`;
+  $('z-score').textContent=G.zScore;
+  clearFb('z-fb');
+  const nb=$('z-next');
+  nb.classList.remove('show');
+  nb.textContent=(rn===tot)?'Ergebnis anzeigen 🏆':'Nächste Runde →';
+  G.zSelLeft=null; G.zMatched=0;
+
+  // Left
+  const lEl=$('z-left'); lEl.innerHTML='';
+  rqs.forEach((q,i)=>{
+    const c=document.createElement('div');
+    c.className='zu-card'; c.textContent=q.L; c.dataset.i=i;
+    c.onclick=()=>zuSelLeft(c,i);
+    lEl.appendChild(c);
+  });
+
+  // Right (shuffled)
+  const rEl=$('z-right'); rEl.innerHTML='';
+  shuffle(rqs.map((q,i)=>({text:q.R,i}))).forEach(({text,i})=>{
+    const c=document.createElement('div');
+    c.className='zu-card'; c.textContent=text; c.dataset.mi=i;
+    c.onclick=()=>zuSelRight(c,rqs);
+    rEl.appendChild(c);
+  });
+
+  anim($('z-card'),'anim-slide');
+}
+
+function zuSelLeft(card,idx){
+  if(card.classList.contains('matched'))return;
+  document.querySelectorAll('#z-left .zu-card.sel').forEach(c=>c.classList.remove('sel'));
+  card.classList.add('sel'); G.zSelLeft=idx;
+}
+
+function zuSelRight(card,rqs){
+  if(card.classList.contains('matched'))return;
+  if(G.zSelLeft===null){
+    setFb('z-fb','← Wähle zuerst links!','err');
+    setTimeout(()=>clearFb('z-fb'),1400); return;
+  }
+  const mi=parseInt(card.dataset.mi);
+  if(mi===G.zSelLeft){
+    const lCards=document.querySelectorAll('#z-left .zu-card');
+    lCards[G.zSelLeft].classList.remove('sel');
+    lCards[G.zSelLeft].classList.add('matched');
+    card.classList.add('matched');
+    G.zMatched++; G.zScore++; $('z-score').textContent=G.zScore;
+    setFb('z-fb',goodMsg(),'ok');
+    setTimeout(()=>clearFb('z-fb'),900);
+    confetti(card); G.zSelLeft=null;
+    if(G.zMatched>=G.zRounds[G.zRound].length){
+      setTimeout(()=>{
+        setFb('z-fb','🎉 Alle Paare gefunden!','ok');
+        $('z-next').classList.add('show');
+      },500);
+    }
+  } else {
+    card.classList.add('bad');
+    const lCards=document.querySelectorAll('#z-left .zu-card');
+    lCards[G.zSelLeft].classList.add('bad');
+    setTimeout(()=>{card.classList.remove('bad');lCards[G.zSelLeft].classList.remove('bad');},350);
+    setFb('z-fb',badMsg()+' Versuch nochmal!','err');
+    setTimeout(()=>clearFb('z-fb'),1200);
+    // track as mistake (mark left card so we know)
+    const rnd=G.zRounds[G.zRound];
+    if(!G.zMistakes.find(m=>m.q===rnd[G.zSelLeft].q)){
+      G.zMistakes.push({q:rnd[G.zSelLeft].L+' = ?', given:'falsch', correct:rnd[G.zSelLeft].R});
+    }
+  }
+}
+
+function nextZu(){
+  G.zRound++;
+  if(G.zRound>=G.zRounds.length) showResult(G.zScore, G.zTotal, G.zMistakes);
+  else renderZuRound();
+}
+
+/* ═══════ RESULT ═══════ */
+function showResult(score, total, mistakes){
+  applyTheme(DB[G.cat]);
+  const pct=score/total;
+  let emoji,title,stars,msg;
+  if(pct>=0.9)     {emoji='🏆';title='Ausgezeichnet!';stars='⭐⭐⭐';msg='Sehr gut für die Klassenarbeit vorbereitet!';}
+  else if(pct>=0.7){emoji='🎉';title='Sehr gut!';     stars='⭐⭐';  msg='Noch 1–2 Runden, dann bist du top vorbereitet!';}
+  else if(pct>=0.5){emoji='😊';title='Gut gemacht!';  stars='⭐';   msg='Schau dir die Fehler unten an und übe weiter!';}
+  else             {emoji='💪';title='Weiter üben!';  stars='✨';   msg='Kein Problem – üb die Fehler und versuche es nochmal!';}
+
+  $('r-emoji').textContent=emoji;
+  $('r-title').textContent=title;
+  $('r-stars').textContent=stars;
+  $('r-num').textContent=score;
+  $('r-of').textContent=`von ${total} Punkten`;
+  $('r-msg').textContent=msg;
+
+  // Fehlerübersicht
+  const fw=$('fehler-wrap');
+  fw.innerHTML='';
+  if(mistakes && mistakes.length>0){
+    const sec=document.createElement('div');
+    sec.className='fehler-section';
+    sec.innerHTML=`<div class="fehler-header">📌 Das solltest du nochmal üben <span style="margin-left:auto;background:#FFC107;color:white;border-radius:6px;padding:2px 8px;font-size:.8rem">${mistakes.length} Fehler</span></div>`;
+    mistakes.forEach(m=>{
+      const item=document.createElement('div');
+      item.className='fehler-item';
+      item.innerHTML=`<span class="fi-icon">❌</span>
+        <div>
+          <div class="fi-q">${m.q}</div>
+          <div class="fi-ans">Deine Antwort: ${m.given}</div>
+          <div class="fi-correct">✔ Richtig: ${m.correct}</div>
+        </div>`;
+      sec.appendChild(item);
+    });
+    fw.appendChild(sec);
+  } else {
+    const sec=document.createElement('div');
+    sec.className='fehler-section';
+    sec.innerHTML='<div class="no-fehler">🎯 Keine Fehler – perfekte Vorbereitung!</div>';
+    fw.appendChild(sec);
+  }
+
+  showSc('s-result');
+  anim(document.querySelector('.result-top'),'anim-pop');
+}
+
+/* ═══════ HELPERS ═══════ */
+function $(id){return document.getElementById(id)}
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function fmt(n){
+  if(Number.isInteger(n))return n.toString();
+  return n.toString().replace('.',',');
+}
+
+function genWrong(correct, pool){
+  const s=new Set();
+  pool.forEach(q=>{if(Math.abs(q.a-correct)>0.001)s.add(q.a);});
+  [correct*10,correct/10,correct*100,correct/100,correct*1000,correct/1000,correct*2].forEach(v=>{
+    v=Math.round(v*1000)/1000;
+    if(v>0&&Math.abs(v-correct)>0.001&&isFinite(v)&&v<10000000)s.add(v);
+  });
+  // Sort by closeness in log scale (more plausible wrong answers)
+  const logC=Math.log10(Math.abs(correct)||1);
+  const sorted=[...s].sort((a,b)=>
+    Math.abs(Math.log10(Math.abs(a)||1)-logC)-Math.abs(Math.log10(Math.abs(b)||1)-logC)
+  );
+  return shuffle(sorted.slice(0,6)).slice(0,3);
+}
+
+function setFb(id,text,cls){const e=$(id);e.textContent=text;e.className='fb '+cls;}
+function clearFb(id){const e=$(id);e.textContent='';e.className='fb';}
+
+function anim(el,cls){
+  el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);
+}
+
+function goodMsg(){
+  return ['✅ Richtig!','🎉 Super!','⭐ Klasse!','✨ Perfekt!','👍 Sehr gut!','🏆 Toll!'][Math.floor(Math.random()*6)];
+}
+function badMsg(){
+  return ['❌ Leider falsch.','😅 Nicht ganz.','🤔 Fast, aber...','💭 Noch nicht.'][Math.floor(Math.random()*4)];
+}
+
+function confetti(el){
+  const r=el.getBoundingClientRect();
+  const cx=r.left+r.width/2, cy=r.top+r.height/2;
+  const cols=['#FFD700','#FF6B6B','#4ECDC4','#96E6A1','#DDA0DD','#87CEEB'];
+  for(let i=0;i<10;i++){
+    const p=document.createElement('div');
+    p.className='confetti-p';
+    const size=7+Math.random()*5;
+    p.style.cssText=`
+      left:${cx+(Math.random()-.5)*70}px;top:${cy+(Math.random()-.5)*20}px;
+      width:${size}px;height:${size}px;
+      background:${cols[i%cols.length]};
+      border-radius:${Math.random()>.5?'50%':'2px'};
+      animation:cdrop ${0.5+Math.random()*.4}s ease ${Math.random()*.15}s forwards;
+    `;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),1200);
+  }
+}
+</script>
+</body>
+</html>
